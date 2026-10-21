@@ -1,0 +1,43 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="auraplan-gradient" x1="8" y1="56" x2="54" y2="8" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F472B6"/>
+      <stop offset="0.48" stop-color="#8B5CF6"/>
+      <stop offset="1" stop-color="#3B82F6"/>
+    </linearGradient>
+
+    <linearGradient id="sparkle-gradient" x1="43" y1="7" x2="57" y2="21" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FDE68A"/>
+      <stop offset="1" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded brand tile -->
+  <rect width="64" height="64" rx="17" fill="#F8FAFC"/>
+
+  <!-- Abstract A: a flowing, continuous ribbon -->
+  <path
+    d="M14 47
+       L27 19
+       Q29 14 32 19
+       L47 47
+       M20 36
+       Q32 30 43 38"
+    fill="none"
+    stroke="url(#auraplan-gradient)"
+    stroke-width="6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <!-- Celebration sparkle -->
+  <path
+    d="M49 7
+       Q50 13 56 14
+       Q50 15 49 21
+       Q48 15 42 14
+       Q48 13 49 7Z"
+    fill="url(#sparkle-gradient)"
+  />
+</svg>
