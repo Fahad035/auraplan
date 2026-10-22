@@ -1,6 +1,7 @@
 import type { EventType } from "../domain/schema";
 import {
   RecommendationSchema,
+  type PreviousPlan,
   type Recommendations,
 } from "../domain/recommendation";
 
@@ -12,6 +13,9 @@ export interface RecommendationOptions {
   location: string;
   guestCount: number;
   totalBudget: number;
+  /** Plain-language change request; requires previousPlan. */
+  feedback?: string;
+  previousPlan?: PreviousPlan;
 }
 
 export async function generateRecommendations(

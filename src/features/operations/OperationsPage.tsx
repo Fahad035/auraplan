@@ -12,6 +12,7 @@ import {
 import BudgetPanel from "./BudgetPanel";
 import TimelinePanel from "./TimelinePanel";
 import VendorChecklist from "./VendorChecklist";
+import RefinePlan from "./RefinePlan";
 import OperationsEmptyState from "./OperationsEmptyState";
 import EventDetailsPanel from "./EventDetailsPanel";
 import EventOverview from "./EventOverview";
@@ -149,6 +150,8 @@ export default function OperationsPage() {
           </div>
         </div>
       )}
+
+      <RefinePlan plan={plan} onApply={updatePlan} />
 
       <section aria-label="Budget management" className="mt-8">
         <div className="mb-4">

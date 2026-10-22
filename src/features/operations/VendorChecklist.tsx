@@ -222,6 +222,20 @@ export default function VendorChecklist({
                   {vendor.category}
                 </p>
 
+                {vendor.tip && (
+                  <p className="mt-1 text-xs text-slate-600">{vendor.tip}</p>
+                )}
+
+                {vendor.bookBy && (
+                  <p className="mt-1 text-xs font-medium text-slate-600">
+                    Book by{" "}
+                    {new Date(`${vendor.bookBy}T00:00:00`).toLocaleDateString(
+                      "en-IN",
+                      { day: "numeric", month: "short", year: "numeric" },
+                    )}
+                  </p>
+                )}
+
                 {vendor.contact && (
                   <p className="mt-1 break-all text-xs text-slate-500">
                     {vendor.contact}

@@ -16,6 +16,43 @@ export const EventDateSchema = z
     );
   }, "Invalid calendar date.");
 
+/** The current plan, sent back to the model when the user asks for changes. */
+export const PreviousPlanSchema = z
+  .object({
+    ideas: z.array(z.string().trim().min(1).max(250)).max(8),
+    budgetItems: z
+      .array(
+        z
+          .object({
+            name: z.string().trim().min(1).max(80),
+            amount: z.number().finite().nonnegative(),
+          })
+          .strict(),
+      )
+      .max(10),
+    timeline: z
+      .array(
+        z
+          .object({
+            title: z.string().trim().min(1).max(120),
+            daysBeforeEvent: z.number().int().min(0).max(365),
+          })
+          .strict(),
+      )
+      .max(12),
+    vendors: z
+      .array(
+        z
+          .object({
+            name: z.string().trim().min(1).max(100),
+            category: z.string().trim().min(1).max(40),
+          })
+          .strict(),
+      )
+      .max(10),
+  })
+  .strict();
+
 export const PlanRequestSchema = z
   .object({
     eventType: EventTypeSchema,
@@ -23,15 +60,19 @@ export const PlanRequestSchema = z
     location: z.string().trim().min(1).max(150),
     guestCount: z.number().int().min(1).max(100_000),
     totalBudget: z.number().int().positive().max(1_000_000_000),
+    feedback: z.string().trim().min(3).max(300).optional(),
+    previousPlan: PreviousPlanSchema.optional(),
   })
-  .strict();
+  .strict()
+  .refine((value) => Boolean(value.feedback) === Boolean(value.previousPlan), {
+    message: "feedback and previousPlan must be provided together.",
+  });
 
 /**
- * Single source of truth for the AI response shape.
- * Imported by the serverless function and by the browser client so the
- * two validation layers cannot drift apart.
+ * What the model returns. The model supplies judgment (relative budget
+ * weights, task offsets, vendor advice); code does the arithmetic.
  */
-export const RecommendationSchema = z
+export const ModelOutputSchema = z
   .object({
     ideas: z.array(z.string().trim().min(1).max(250)).min(3).max(8),
     budgetItems: z
@@ -39,7 +80,7 @@ export const RecommendationSchema = z
         z
           .object({
             name: z.string().trim().min(1).max(80),
-            amount: z.number().finite().nonnegative(),
+            weight: z.number().finite().positive().max(1_000_000),
           })
           .strict(),
       )
@@ -62,6 +103,8 @@ export const RecommendationSchema = z
           .object({
             name: z.string().trim().min(1).max(100),
             category: z.string().trim().min(1).max(40),
+            tip: z.string().trim().max(200).default(""),
+            bookByDaysBefore: z.number().int().min(0).max(365).default(30),
           })
           .strict(),
       )
@@ -70,65 +113,78 @@ export const RecommendationSchema = z
   })
   .strict();
 
-export type PlanRequest = z.infer<typeof PlanRequestSchema>;
-export type Recommendations = z.infer<typeof RecommendationSchema>;
-
-export type BudgetItem = {
-  name: string;
-  amount: number;
-};
+/** What the API returns to the browser after server-side enrichment. */
+export const RecommendationSchema = z
+  .object({
+    ideas: z.array(z.string().trim().min(1).max(250)).min(3).max(8),
+    budgetItems: z
+      .array(
+        z
+          .object({
+            name: z.string().trim().min(1).max(80),
+            amount: z.number().finite().nonnegative(),
+          })
+          .strict(),
+      )
+      .min(3)
+      .max(10),
+    timeline: z
+      .array(
+        z
+          .object({
+            title: z.string().trim().min(1).max(120),
+            daysBeforeEvent: z.number().int().min(0).max(365),
+            urgent: z.boolean().default(false),
+          })
+          .strict(),
+      )
+      .min(3)
+      .max(12),
+    vendors: z
+      .array(
+        z
+          .object({
+            name: z.string().trim().min(1).max(100),
+            category: z.string().trim().min(1).max(40),
+            tip: z.string().trim().max(200).default(""),
+            bookByDaysBefore: z.number().int().min(0).max(365).default(30),
+            urgent: z.boolean().default(false),
+          })
+          .strict(),
+      )
+      .max(10)
+      .default([]),
+  })
+  .strict();
 
 /**
- * Guarantees the allocated amount never exceeds the budget left after the
- * contingency reserve, regardless of what the model returned.
+ * Turns relative weights into whole-number amounts that add up to exactly
+ * `total` (largest-remainder rounding).
  */
-export function enforceBudgetLimit(
-  items: BudgetItem[],
-  totalBudget: number,
-  contingencyPercent = CONTINGENCY_PERCENT,
-): BudgetItem[] {
-  const contingency = Math.round(totalBudget * (contingencyPercent / 100));
-  const availableBudget = Math.max(0, totalBudget - contingency);
+function allocateBudget(
+  items: { name: string; weight: number }[],
+  total: number,
+): { name: string; amount: number }[] {
+  const weightSum = items.reduce((sum, item) => sum + item.weight, 0);
+  const exact = items.map((item) => (total * item.weight) / weightSum);
+  const amounts = exact.map(Math.floor);
 
-  const normalizedItems = items.map((item) => ({
-    ...item,
-    amount: Math.round(item.amount),
+  let leftover = total - amounts.reduce((sum, amount) => sum + amount, 0);
+
+  const byRemainder = exact
+    .map((value, index) => ({ index, remainder: value - amounts[index] }))
+    .sort((a, b) => b.remainder - a.remainder || a.index - b.index);
+
+  for (const { index } of byRemainder) {
+    if (leftover <= 0) break;
+    amounts[index] += 1;
+    leftover -= 1;
+  }
+
+  return items.map((item, index) => ({
+    name: item.name,
+    amount: amounts[index],
   }));
-
-  if (normalizedItems.length === 0) {
-    return normalizedItems;
-  }
-
-  const allocated = normalizedItems.reduce((sum, item) => sum + item.amount, 0);
-
-  if (allocated <= availableBudget) {
-    return normalizedItems;
-  }
-
-  const largestAmount = Math.max(...normalizedItems.map((item) => item.amount));
-
-  // Divide by the largest amount first to avoid overflow with huge values.
-  const normalizedTotal = normalizedItems.reduce(
-    (sum, item) => sum + item.amount / largestAmount,
-    0,
-  );
-
-  const scaledItems = normalizedItems.map((item) => ({
-    ...item,
-    amount: Math.floor(
-      (item.amount / largestAmount / normalizedTotal) * availableBudget,
-    ),
-  }));
-
-  let remaining =
-    availableBudget - scaledItems.reduce((sum, item) => sum + item.amount, 0);
-
-  for (let index = 0; remaining > 0; index = (index + 1) % scaledItems.length) {
-    scaledItems[index].amount += 1;
-    remaining -= 1;
-  }
-
-  return scaledItems;
 }
 
 type RateLimitEntry = { timestamps: number[] };
@@ -138,7 +194,7 @@ type RateLimitEntry = { timestamps: number[] };
  * best-effort abuse guard; use a shared store (e.g. Vercel KV/Upstash)
  * for strict global limits.
  */
-export function createRateLimiter(windowMs: number, maxRequests: number) {
+function createRateLimiter(windowMs: number, maxRequests: number) {
   const store = new Map<string, RateLimitEntry>();
   let lastSweep = 0;
 
@@ -174,3 +230,9 @@ export function createRateLimiter(windowMs: number, maxRequests: number) {
     };
   };
 }
+
+// --- exports (the API function inlines everything above this line) ---
+export { allocateBudget, createRateLimiter };
+export type PlanRequest = z.infer<typeof PlanRequestSchema>;
+export type PreviousPlan = z.infer<typeof PreviousPlanSchema>;
+export type Recommendations = z.infer<typeof RecommendationSchema>;

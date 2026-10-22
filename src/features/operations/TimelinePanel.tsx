@@ -1,4 +1,3 @@
-
 import { useState, type FormEvent } from "react";
 import {
   CalendarDays,
@@ -184,6 +183,11 @@ export default function TimelinePanel({
                   }`}
                 >
                   {item.title}
+                  {item.urgent && !item.completed && (
+                    <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                      Do now
+                    </span>
+                  )}
                 </p>
                 <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
                   <CalendarDays size={13} />

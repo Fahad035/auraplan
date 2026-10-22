@@ -19,13 +19,22 @@ function extract(file: string, start: string, end: string): string {
 
 describe("inlined API schema parity", () => {
   it.each([
-    ["const EventTypeSchema", "const PlanRequestSchema", "const PlanRequestSchema"],
-    ["const PlanRequestSchema", "const RecommendationSchema", "const RecommendationSchema"],
-    ["const RecommendationSchema", "type BudgetItem", "type PlanRequest ="],
-    ["function enforceBudgetLimit", "type RateLimitEntry", "type RateLimitEntry"],
-  ])("keeps %s identical", (start, apiEnd, sharedEnd) => {
-    expect(extract("api/plan.ts", start, apiEnd)).toBe(
-      extract("src/domain/recommendation.ts", start, sharedEnd),
+    ["const EventTypeSchema", "const PreviousPlanSchema"],
+    ["const PreviousPlanSchema", "const PlanRequestSchema"],
+    ["const PlanRequestSchema", "const ModelOutputSchema"],
+    ["const ModelOutputSchema", "const RecommendationSchema"],
+    ["const RecommendationSchema", "type RateLimitEntry"],
+  ])("keeps %s identical", (start, end) => {
+    expect(extract("api/plan.ts", start, end)).toBe(
+      extract("src/domain/recommendation.ts", start, end),
+    );
+  });
+
+  it("keeps the rate limiter identical", () => {
+    expect(
+      extract("api/plan.ts", "function createRateLimiter", "const MAX_REQUEST_BYTES"),
+    ).toBe(
+      extract("src/domain/recommendation.ts", "function createRateLimiter", "// --- exports"),
     );
   });
 });

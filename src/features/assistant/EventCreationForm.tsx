@@ -4,7 +4,7 @@ import { CalendarDays, MapPin, Users, Wallet, Sparkles } from "lucide-react";
 
 import Button from "../../components/ui/Button";
 import { EventPlanSchema, type EventType } from "../../domain/schema";
-import { buildVendorChecklist } from "../../domain/checklist";
+import { buildTimeline, buildVendors } from "../../domain/planBuilder";
 import { generateRecommendations } from "../../lib/api";
 import { loadEventPlans, saveEventPlans } from "../../lib/storage";
 
@@ -78,25 +78,7 @@ export default function EventCreationForm() {
         totalBudget: budget,
       });
 
-      const eventDateObject = new Date(`${eventDate}T12:00:00`);
-
-      const timeline = recommendations.timeline.map((item) => {
-        const taskDate = new Date(eventDateObject);
-        taskDate.setDate(taskDate.getDate() - item.daysBeforeEvent);
-
-        const formattedDate = [
-          taskDate.getFullYear(),
-          String(taskDate.getMonth() + 1).padStart(2, "0"),
-          String(taskDate.getDate()).padStart(2, "0"),
-        ].join("-");
-
-        return {
-          id: crypto.randomUUID(),
-          title: item.title,
-          date: formattedDate,
-          completed: false,
-        };
-      });
+      const timeline = buildTimeline(eventDate, recommendations.timeline);
 
       const planResult = EventPlanSchema.safeParse({
         id: crypto.randomUUID(),
@@ -113,7 +95,7 @@ export default function EventCreationForm() {
           amount: item.amount,
         })),
         timeline,
-        vendors: buildVendorChecklist(eventType, recommendations.vendors),
+        vendors: buildVendors(eventType, eventDate, recommendations.vendors),
         ideas: recommendations.ideas,
       });
 

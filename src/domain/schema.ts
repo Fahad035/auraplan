@@ -17,6 +17,7 @@ export const TimelineItemSchema = z.object({
   title: z.string().min(1),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   completed: z.boolean(),
+  urgent: z.boolean().optional(),
 });
 
 export const VendorSchema = z.object({
@@ -24,6 +25,8 @@ export const VendorSchema = z.object({
   name: z.string().min(1),
   category: z.string().min(1),
   contact: z.string().optional(),
+  tip: z.string().optional(),
+  bookBy: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   booked: z.boolean(),
 });
 

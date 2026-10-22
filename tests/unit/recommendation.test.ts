@@ -1,40 +1,60 @@
 import { describe, expect, it } from "vitest";
 import {
+  ModelOutputSchema,
   PlanRequestSchema,
   RecommendationSchema,
+  allocateBudget,
   createRateLimiter,
-  enforceBudgetLimit,
 } from "../../src/domain/recommendation";
 import { buildVendorChecklist } from "../../src/domain/checklist";
 
-const items = [
-  { name: "Venue", amount: 60000 },
-  { name: "Food", amount: 50000 },
-  { name: "Decor", amount: 40000 },
-];
+const sum = (items: { amount: number }[]) =>
+  items.reduce((total, item) => total + item.amount, 0);
 
-describe("enforceBudgetLimit", () => {
-  it("keeps items unchanged when already within the available budget", () => {
-    expect(enforceBudgetLimit(items, 200000)).toEqual(items);
+describe("allocateBudget", () => {
+  it("always adds up to exactly the total (largest remainder)", () => {
+    const items = [
+      { name: "A", weight: 33 },
+      { name: "B", weight: 33 },
+      { name: "C", weight: 34 },
+    ];
+
+    for (const total of [0, 1, 7, 100, 999, 90_001, 1_234_567]) {
+      const result = allocateBudget(items, total);
+
+      expect(sum(result)).toBe(total);
+      expect(result.every((item) => Number.isInteger(item.amount))).toBe(true);
+    }
   });
 
-  it("scales items so the total never exceeds budget minus contingency", () => {
-    const result = enforceBudgetLimit(items, 100000);
-    const total = result.reduce((sum, item) => sum + item.amount, 0);
-
-    expect(total).toBe(90000);
-    expect(result.every((item) => Number.isInteger(item.amount))).toBe(true);
-  });
-
-  it("handles zero amounts and empty lists", () => {
-    expect(enforceBudgetLimit([], 1000)).toEqual([]);
-    expect(enforceBudgetLimit([{ name: "A", amount: 0 }], 1000)).toEqual([
-      { name: "A", amount: 0 },
+  it("splits in proportion to weights", () => {
+    expect(
+      allocateBudget(
+        [
+          { name: "Venue", weight: 50 },
+          { name: "Food", weight: 30 },
+          { name: "Decor", weight: 20 },
+        ],
+        1000,
+      ),
+    ).toEqual([
+      { name: "Venue", amount: 500 },
+      { name: "Food", amount: 300 },
+      { name: "Decor", amount: 200 },
     ]);
   });
 
-  it("rounds fractional amounts", () => {
-    expect(enforceBudgetLimit([{ name: "A", amount: 10.6 }], 1000)[0].amount).toBe(11);
+  it("gives the leftover rupee to the largest remainder", () => {
+    const result = allocateBudget(
+      [
+        { name: "A", weight: 1 },
+        { name: "B", weight: 1 },
+        { name: "C", weight: 1 },
+      ],
+      100,
+    );
+
+    expect(result.map((item) => item.amount)).toEqual([34, 33, 33]);
   });
 });
 
@@ -47,8 +67,35 @@ describe("PlanRequestSchema", () => {
     totalBudget: 500000,
   };
 
+  const previousPlan = {
+    ideas: ["a"],
+    budgetItems: [{ name: "Venue", amount: 100 }],
+    timeline: [{ title: "Book venue", daysBeforeEvent: 30 }],
+    vendors: [{ name: "Caterer", category: "Catering" }],
+  };
+
   it("accepts a valid request", () => {
     expect(PlanRequestSchema.safeParse(valid).success).toBe(true);
+  });
+
+  it("accepts a refinement with feedback and a previous plan", () => {
+    expect(
+      PlanRequestSchema.safeParse({
+        ...valid,
+        feedback: "make it cheaper",
+        previousPlan,
+      }).success,
+    ).toBe(true);
+  });
+
+  it("requires feedback and previousPlan together", () => {
+    expect(
+      PlanRequestSchema.safeParse({ ...valid, feedback: "make it cheaper" })
+        .success,
+    ).toBe(false);
+    expect(PlanRequestSchema.safeParse({ ...valid, previousPlan }).success).toBe(
+      false,
+    );
   });
 
   it.each([
@@ -57,16 +104,23 @@ describe("PlanRequestSchema", () => {
     { guestCount: 0 },
     { totalBudget: 10.5 },
     { location: "   " },
+    { feedback: "x".repeat(301), previousPlan: undefined },
     { extra: "field" },
   ])("rejects invalid input %o", (override) => {
-    expect(PlanRequestSchema.safeParse({ ...valid, ...override }).success).toBe(false);
+    expect(PlanRequestSchema.safeParse({ ...valid, ...override }).success).toBe(
+      false,
+    );
   });
 });
 
-describe("RecommendationSchema", () => {
+describe("ModelOutputSchema", () => {
   const base = {
     ideas: ["a", "b", "c"],
-    budgetItems: items,
+    budgetItems: [
+      { name: "Venue", weight: 40 },
+      { name: "Food", weight: 35 },
+      { name: "Decor", weight: 25 },
+    ],
     timeline: [
       { title: "a", daysBeforeEvent: 1 },
       { title: "b", daysBeforeEvent: 2 },
@@ -74,13 +128,59 @@ describe("RecommendationSchema", () => {
     ],
   };
 
-  it("defaults vendors to an empty list", () => {
+  it("defaults vendors and vendor details", () => {
+    expect(ModelOutputSchema.parse(base).vendors).toEqual([]);
+
+    const withVendor = ModelOutputSchema.parse({
+      ...base,
+      vendors: [{ name: "Caterer", category: "Catering" }],
+    });
+
+    expect(withVendor.vendors[0]).toMatchObject({ tip: "", bookByDaysBefore: 30 });
+  });
+
+  it("rejects currency amounts and non-positive weights", () => {
+    expect(
+      ModelOutputSchema.safeParse({
+        ...base,
+        budgetItems: [{ name: "Venue", amount: 5 }, ...base.budgetItems.slice(1)],
+      }).success,
+    ).toBe(false);
+    expect(
+      ModelOutputSchema.safeParse({
+        ...base,
+        budgetItems: [{ name: "Venue", weight: 0 }, ...base.budgetItems.slice(1)],
+      }).success,
+    ).toBe(false);
+  });
+});
+
+describe("RecommendationSchema", () => {
+  const base = {
+    ideas: ["a", "b", "c"],
+    budgetItems: [
+      { name: "Venue", amount: 60000 },
+      { name: "Food", amount: 50000 },
+      { name: "Decor", amount: 40000 },
+    ],
+    timeline: [
+      { title: "a", daysBeforeEvent: 1 },
+      { title: "b", daysBeforeEvent: 2 },
+      { title: "c", daysBeforeEvent: 3 },
+    ],
+  };
+
+  it("fills defaults for vendors and urgency", () => {
     const result = RecommendationSchema.parse(base);
+
     expect(result.vendors).toEqual([]);
+    expect(result.timeline.every((item) => item.urgent === false)).toBe(true);
   });
 
   it("rejects too few ideas", () => {
-    expect(RecommendationSchema.safeParse({ ...base, ideas: ["a"] }).success).toBe(false);
+    expect(RecommendationSchema.safeParse({ ...base, ideas: ["a"] }).success).toBe(
+      false,
+    );
   });
 });
 
