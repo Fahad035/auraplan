@@ -244,7 +244,7 @@ export default function OperationsPage() {
                   </p>
                 </div>
               </div>
-              <span className="text-lg font-bold text-violet-700">
+              <span className="text-lg font-bold text-violet-700 dark:text-violet-300">
                 {progress.percentage}%
               </span>
             </div>
@@ -280,7 +280,7 @@ export default function OperationsPage() {
                   </p>
                 </div>
               </div>
-              <span className="text-lg font-bold text-emerald-700">
+              <span className="text-lg font-bold text-emerald-700 dark:text-emerald-300">
                 {vendorProgress.percentage}%
               </span>
             </div>
@@ -325,7 +325,7 @@ export default function OperationsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-medium text-emerald-700">
+        <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-300">
           <CheckCircle2 size={16} />
           Browser storage enabled
         </div>

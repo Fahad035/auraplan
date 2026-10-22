@@ -247,7 +247,7 @@ export default function VendorChecklist({
                 <span
                   className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                     vendor.booked
-                      ? "bg-emerald-50 text-emerald-700"
+                      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
                       : "bg-amber-50 text-amber-700"
                   }`}
                 >

@@ -69,7 +69,7 @@ Tests cover the domain logic, the `/api/plan` handler (405/413/415/429/400/500/5
 - `GEMINI_API_KEY` exists only as a server-side environment variable. `.env*` files are git-ignored.
 - Both trust boundaries use strict zod schemas: user input (enums, bounded numbers, a real calendar date, length-capped text, unknown keys rejected, 16 KB body cap) and model output (anything off-schema returns 502 and is never forwarded).
 - User text reaches the model only as JSON inside tagged data blocks, and the system instruction says to treat them as data, never as instructions.
-- Headers in `vercel.json`: a Content-Security-Policy (`'self'` only, no inline styles), HSTS, `nosniff`, referrer and permissions policies, COOP and `frame-ancestors 'none'`.
+- Headers in `vercel.json`: a Content-Security-Policy that limits scripts to same-origin plus one pinned hash (`'unsafe-inline'` is allowed for styles only, because Vite's dev server injects inline styles), HSTS, `nosniff`, referrer and permissions policies, COOP and `frame-ancestors 'none'`.
 - Errors returned to users are generic; logs never include the API key, prompts or user text.
 - **Known limit:** the rate limiter is in memory per function instance, so it is a best-effort guard. For strict global limits, add a Vercel Firewall rate-limit rule or a shared store.
 

@@ -160,7 +160,7 @@ export default function BudgetPanel({
           </span>
           <span
             className={`font-semibold ${
-              budget.isOverBudget ? "text-red-600" : "text-emerald-700"
+              budget.isOverBudget ? "text-red-600 dark:text-red-300" : "text-emerald-700 dark:text-emerald-300"
             }`}
           >
             {currency.format(budget.remaining)}

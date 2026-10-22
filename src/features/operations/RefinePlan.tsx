@@ -104,7 +104,7 @@ export default function RefinePlan({ plan, onApply }: RefinePlanProps) {
           )}
 
           {done && !isRefining && (
-            <p role="status" className="text-sm text-emerald-700">
+            <p role="status" className="text-sm text-emerald-700 dark:text-emerald-300">
               Your plan was updated.
             </p>
           )}
