@@ -20,7 +20,7 @@ export default function AppHeader({
   const isDark = theme === "dark";
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
-    `inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
+    `inline-flex items-center gap-2 rounded-xl px-2 py-2 text-sm sm:px-3 font-medium transition-colors ${
       isActive
         ? "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"
         : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"

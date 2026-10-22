@@ -28,9 +28,10 @@ export default defineConfig({
     include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
     coverage: {
       provider: "v8",
-      include: ["src/domain/**", "src/lib/**", "api/**"],
+      include: ["src/**/*.{ts,tsx}", "api/**/*.ts"],
+      exclude: ["src/main.tsx"],
       reporter: ["text", "lcov"],
-      thresholds: { lines: 80, functions: 80, statements: 80, branches: 70 },
+      thresholds: { lines: 90, functions: 88, statements: 90, branches: 80 },
     },
   },
 });

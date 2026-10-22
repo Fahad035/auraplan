@@ -17,6 +17,8 @@ import OperationsEmptyState from "./OperationsEmptyState";
 import EventDetailsPanel from "./EventDetailsPanel";
 import EventOverview from "./EventOverview";
 import BudgetReserveSummary from "./BudgetReserveSummary";
+import IdeasPanel from "./IdeasPanel";
+import { useDocumentTitle } from "../../lib/useDocumentTitle";
 
 import Button from "../../components/ui/Button";
 import PageHeader from "../../components/shared/PageHeader";
@@ -32,7 +34,6 @@ import { getVendorProgress } from "../../domain/checklist";
 import type { EventPlan } from "../../domain/schema";
 import { loadEventPlans, saveEventPlans } from "../../lib/storage";
 
-
 const currency = new Intl.NumberFormat("en-IN", {
   style: "currency",
   currency: "INR",
@@ -44,11 +45,15 @@ export default function OperationsPage() {
   const navigate = useNavigate();
 
   const [plans, setPlans] = useState<EventPlan[]>(() => loadEventPlans());
-
-  const requestedId = location.state?.eventId as string | undefined;
+  const [selectedId, setSelectedId] = useState<string | undefined>(
+    location.state?.eventId as string | undefined,
+  );
+  const [saveError, setSaveError] = useState("");
 
   const plan =
-    plans.find((item) => item.id === requestedId) ?? plans[plans.length - 1];
+    plans.find((item) => item.id === selectedId) ?? plans[plans.length - 1];
+
+  useDocumentTitle(plan ? `${plan.title} · Operations` : "Operations");
 
   function updatePlan(updatedPlan: EventPlan) {
     const updatedPlans = plans.map((item) =>
@@ -58,9 +63,10 @@ export default function OperationsPage() {
     try {
       saveEventPlans(updatedPlans);
       setPlans(updatedPlans);
+      setSaveError("");
     } catch {
-      window.alert(
-        "Unable to save your changes. Check available browser storage.",
+      setSaveError(
+        "Unable to save your changes. Check that browser storage is available and not full.",
       );
     }
   }
@@ -84,6 +90,38 @@ export default function OperationsPage() {
         title={plan.title}
         description="Your celebration, organized in one place. Monitor spending, stay on schedule, and keep every vendor on track."
       />
+
+      {saveError && (
+        <p
+          role="alert"
+          className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+        >
+          {saveError}
+        </p>
+      )}
+
+      {plans.length > 1 && (
+        <div className="mt-4 max-w-md print:hidden">
+          <label
+            htmlFor="event-switcher"
+            className="text-sm font-medium text-slate-700 dark:text-slate-300"
+          >
+            Your events
+          </label>
+          <select
+            id="event-switcher"
+            value={plan.id}
+            onChange={(event) => setSelectedId(event.target.value)}
+            className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+          >
+            {plans.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.title} · {item.eventDate} · {item.location}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div
         className="mt-4 flex flex-wrap gap-3 print:hidden"
@@ -151,6 +189,7 @@ export default function OperationsPage() {
         </div>
       )}
 
+      <IdeasPanel ideas={plan.ideas} />
       <RefinePlan plan={plan} onApply={updatePlan} />
 
       <section aria-label="Budget management" className="mt-8">

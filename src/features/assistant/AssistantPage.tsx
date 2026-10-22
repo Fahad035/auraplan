@@ -12,6 +12,7 @@ import {
 
 import PageHeader from "../../components/shared/PageHeader";
 import EventCreationForm from "./EventCreationForm";
+import { useDocumentTitle } from "../../lib/useDocumentTitle";
 
 const features = [
   {
@@ -56,6 +57,7 @@ const planningSteps = [
 ];
 
 export default function AssistantPage() {
+  useDocumentTitle("Plan your event");
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-7 sm:px-6 sm:py-10 lg:py-12">
       <PageHeader
