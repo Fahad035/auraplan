@@ -4,7 +4,7 @@ import {
   RecommendationSchema,
   createRateLimiter,
   enforceBudgetLimit,
-} from "../../api/_shared/recommendation";
+} from "../../src/domain/recommendation";
 import { buildVendorChecklist } from "../../src/domain/checklist";
 
 const items = [

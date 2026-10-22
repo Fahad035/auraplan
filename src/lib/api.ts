@@ -2,7 +2,7 @@ import type { EventType } from "../domain/schema";
 import {
   RecommendationSchema,
   type Recommendations,
-} from "../../api/_shared/recommendation";
+} from "../domain/recommendation";
 
 export type EventRecommendations = Recommendations;
 
