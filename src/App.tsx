@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import AppHeader from "./components/layout/AppHeader";
 import AppFooter from "./components/layout/AppFooter";
 import AppRoutes from "./app/routes";
+import ErrorBoundary from "./components/shared/ErrorBoundary";
 
 type Theme = "light" | "dark";
 
@@ -56,7 +57,9 @@ export default function App() {
         <AppHeader theme={theme} onToggleTheme={toggleTheme} />
 
         <div id="main-content" tabIndex={-1} className="flex flex-1 flex-col outline-none">
-          <AppRoutes />
+          <ErrorBoundary>
+            <AppRoutes />
+          </ErrorBoundary>
         </div>
 
         <AppFooter />

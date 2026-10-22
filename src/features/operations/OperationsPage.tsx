@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { AlertTriangle, Store, CheckCircle2 } from "lucide-react";
+import {
+  AlertTriangle,
+  Download,
+  FileText,
+  Printer,
+  Store,
+  CheckCircle2,
+} from "lucide-react";
 
 import BudgetPanel from "./BudgetPanel";
 import TimelinePanel from "./TimelinePanel";
@@ -10,9 +17,16 @@ import EventDetailsPanel from "./EventDetailsPanel";
 import EventOverview from "./EventOverview";
 import BudgetReserveSummary from "./BudgetReserveSummary";
 
+import Button from "../../components/ui/Button";
 import PageHeader from "../../components/shared/PageHeader";
 import { calculateBudget } from "../../domain/budget";
 import { getTimelineProgress } from "../../domain/timeline";
+import {
+  downloadTextFile,
+  planToJson,
+  planToMarkdown,
+  safeFileName,
+} from "../../domain/export";
 import { getVendorProgress } from "../../domain/checklist";
 import type { EventPlan } from "../../domain/schema";
 import { loadEventPlans, saveEventPlans } from "../../lib/storage";
@@ -69,6 +83,43 @@ export default function OperationsPage() {
         title={plan.title}
         description="Your celebration, organized in one place. Monitor spending, stay on schedule, and keep every vendor on track."
       />
+
+      <div
+        className="mt-4 flex flex-wrap gap-3 print:hidden"
+        role="group"
+        aria-label="Export and print plan"
+      >
+        <Button
+          variant="secondary"
+          onClick={() =>
+            downloadTextFile(
+              `${safeFileName(plan.title)}.json`,
+              planToJson(plan),
+              "application/json",
+            )
+          }
+        >
+          <Download size={16} aria-hidden="true" />
+          Export JSON
+        </Button>
+        <Button
+          variant="secondary"
+          onClick={() =>
+            downloadTextFile(
+              `${safeFileName(plan.title)}.md`,
+              planToMarkdown(plan),
+              "text/markdown",
+            )
+          }
+        >
+          <FileText size={16} aria-hidden="true" />
+          Export summary
+        </Button>
+        <Button variant="secondary" onClick={() => window.print()}>
+          <Printer size={16} aria-hidden="true" />
+          Print plan
+        </Button>
+      </div>
 
       <EventDetailsPanel plan={plan} />
 

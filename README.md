@@ -18,7 +18,8 @@ Provide your event requirements, event date, and total budget, and AuraPlan help
 4. **Manage Event Timelines** — Review event-related tasks, milestones, and deadlines through the planning dashboard.
 5. **Organize Vendor Information** — Keep vendor-related planning details accessible alongside other event information.
 6. **Track Planning Progress** — Use the operations dashboard to review event information, budget status, and planning progress.
-7. **Access a Responsive Interface** — Work with a modern interface designed for supported desktop and mobile screen sizes.
+7. **Export and Print Your Plan** — Download the plan as JSON or a Markdown summary, or print it from the operations dashboard.
+8. **Access a Responsive Interface** — Work with a modern interface designed for supported desktop and mobile screen sizes.
 
 AuraPlan aims to make event planning more organized and accessible. AI-generated recommendations and expense estimates are suggestions, not guarantees of actual costs.
 
@@ -174,7 +175,7 @@ npm run build
 - **Request validation** — Test request handling and validation behavior where covered by the test suite.
 - **Regression prevention** — Rerun tests after changes to help identify unintended behavior.
 
-The exact test count, coverage percentage, and security status depend on the current test suite and the results of the latest run. No test count or coverage percentage is claimed here.
+The suite covers domain logic, the `/api/plan` handler (method, size, rate-limit, validation and model-failure paths), the browser API client, plan export, schema parity between the API and client, and automated axe accessibility checks on the creation form and operations page. `npm run test:coverage` enforces minimum coverage thresholds; run it to see current numbers.
 
 ---
 
@@ -237,7 +238,6 @@ Potential areas for further development include:
 - More detailed event templates and reusable planning presets.
 - Enhanced expense breakdowns and budget comparison tools.
 - Calendar integration and deadline reminders.
-- Exportable event plans and printable schedules.
 - More comprehensive automated tests and coverage reporting.
 - Additional accessibility checks and usability improvements.
 - More detailed vendor comparison and coordination workflows.
