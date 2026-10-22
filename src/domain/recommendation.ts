@@ -9,70 +9,47 @@ export const EventDateSchema = z
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format.")
   .refine((value) => {
     const parsed = new Date(`${value}T00:00:00.000Z`);
+
     return (
       !Number.isNaN(parsed.getTime()) &&
       parsed.toISOString().slice(0, 10) === value
     );
   }, "Invalid calendar date.");
 
-// Shared primitive schemas
-const IdeaSchema = z.string().trim().min(1).max(250);
-const ItemNameSchema = z.string().trim().min(1).max(80);
-const TimelineTitleSchema = z.string().trim().min(1).max(120);
-const VendorNameSchema = z.string().trim().min(1).max(100);
-const VendorCategorySchema = z.string().trim().min(1).max(40);
-const VendorTipSchema = z.string().trim().max(200);
-const DaysBeforeEventSchema = z.number().int().min(0).max(365);
-
-// Shared object schemas
-const BudgetAmountSchema = z
-  .object({
-    name: ItemNameSchema,
-    amount: z.number().finite().nonnegative(),
-  })
-  .strict();
-
-const TimelineItemSchema = z
-  .object({
-    title: TimelineTitleSchema,
-    daysBeforeEvent: DaysBeforeEventSchema,
-  })
-  .strict();
-
-const VendorBaseSchema = z.object({
-  name: VendorNameSchema,
-  category: VendorCategorySchema,
-});
-
-const VendorRecommendationSchema = VendorBaseSchema.extend({
-  tip: VendorTipSchema.default(""),
-  bookByDaysBefore: z.number().int().min(0).max(365).default(30),
-}).strict();
-
-const PreviousVendorSchema = VendorBaseSchema.strict();
-
-const ModelBudgetItemSchema = z
-  .object({
-    name: ItemNameSchema,
-    weight: z.number().finite().positive().max(1_000_000),
-  })
-  .strict();
-
-const RecommendedTimelineItemSchema = TimelineItemSchema.extend({
-  urgent: z.boolean().default(false),
-}).strict();
-
-const RecommendedVendorSchema = VendorRecommendationSchema.extend({
-  urgent: z.boolean().default(false),
-}).strict();
-
 /** The current plan, sent back to the model when the user asks for changes. */
 export const PreviousPlanSchema = z
   .object({
-    ideas: z.array(IdeaSchema).max(8),
-    budgetItems: z.array(BudgetAmountSchema).max(10),
-    timeline: z.array(TimelineItemSchema).max(12),
-    vendors: z.array(PreviousVendorSchema).max(10),
+    ideas: z.array(z.string().trim().min(1).max(250)).max(8),
+    budgetItems: z
+      .array(
+        z
+          .object({
+            name: z.string().trim().min(1).max(80),
+            amount: z.number().finite().nonnegative(),
+          })
+          .strict(),
+      )
+      .max(10),
+    timeline: z
+      .array(
+        z
+          .object({
+            title: z.string().trim().min(1).max(120),
+            daysBeforeEvent: z.number().int().min(0).max(365),
+          })
+          .strict(),
+      )
+      .max(12),
+    vendors: z
+      .array(
+        z
+          .object({
+            name: z.string().trim().min(1).max(100),
+            category: z.string().trim().min(1).max(40),
+          })
+          .strict(),
+      )
+      .max(10),
   })
   .strict();
 
@@ -92,31 +69,93 @@ export const PlanRequestSchema = z
   });
 
 /**
- * Model output contains relative budget weights; application code
- * performs the budget arithmetic.
+ * What the model returns. The model supplies judgment (relative budget
+ * weights, task offsets, vendor advice); code does the arithmetic.
  */
 export const ModelOutputSchema = z
   .object({
-    ideas: z.array(IdeaSchema).min(3).max(8),
-    budgetItems: z.array(ModelBudgetItemSchema).min(3).max(10),
-    timeline: z.array(TimelineItemSchema).min(3).max(12),
-    vendors: z.array(VendorRecommendationSchema).max(10).default([]),
-  })
-  .strict();
-
-/** API response after server-side enrichment. */
-export const RecommendationSchema = z
-  .object({
-    ideas: z.array(IdeaSchema).min(3).max(8),
-    budgetItems: z.array(BudgetAmountSchema).min(3).max(10),
+    ideas: z.array(z.string().trim().min(1).max(250)).min(3).max(8),
+    budgetItems: z
+      .array(
+        z
+          .object({
+            name: z.string().trim().min(1).max(80),
+            weight: z.number().finite().positive().max(1_000_000),
+          })
+          .strict(),
+      )
+      .min(3)
+      .max(10),
     timeline: z
-      .array(RecommendedTimelineItemSchema)
+      .array(
+        z
+          .object({
+            title: z.string().trim().min(1).max(120),
+            daysBeforeEvent: z.number().int().min(0).max(365),
+          })
+          .strict(),
+      )
       .min(3)
       .max(12),
-    vendors: z.array(RecommendedVendorSchema).max(10).default([]),
+    vendors: z
+      .array(
+        z
+          .object({
+            name: z.string().trim().min(1).max(100),
+            category: z.string().trim().min(1).max(40),
+            tip: z.string().trim().max(200).default(""),
+            bookByDaysBefore: z.number().int().min(0).max(365).default(30),
+          })
+          .strict(),
+      )
+      .max(10)
+      .default([]),
   })
   .strict();
 
+/** What the API returns to the browser after server-side enrichment. */
+export const RecommendationSchema = z
+  .object({
+    ideas: z.array(z.string().trim().min(1).max(250)).min(3).max(8),
+    budgetItems: z
+      .array(
+        z
+          .object({
+            name: z.string().trim().min(1).max(80),
+            amount: z.number().finite().nonnegative(),
+          })
+          .strict(),
+      )
+      .min(3)
+      .max(10),
+    timeline: z
+      .array(
+        z
+          .object({
+            title: z.string().trim().min(1).max(120),
+            daysBeforeEvent: z.number().int().min(0).max(365),
+            urgent: z.boolean().default(false),
+          })
+          .strict(),
+      )
+      .min(3)
+      .max(12),
+    vendors: z
+      .array(
+        z
+          .object({
+            name: z.string().trim().min(1).max(100),
+            category: z.string().trim().min(1).max(40),
+            tip: z.string().trim().max(200).default(""),
+            bookByDaysBefore: z.number().int().min(0).max(365).default(30),
+            urgent: z.boolean().default(false),
+          })
+          .strict(),
+      )
+      .max(10)
+      .default([]),
+  })
+  .strict();
 
 /**
  * Turns relative weights into whole-number amounts that add up to exactly
@@ -191,7 +230,6 @@ function createRateLimiter(windowMs: number, maxRequests: number) {
     };
   };
 }
-
 
 // --- exports (the API function inlines everything above this line) ---
 export { allocateBudget, createRateLimiter };
