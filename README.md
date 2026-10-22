@@ -12,7 +12,7 @@ AuraPlan is an AI-powered event-planning assistant that helps users organize cel
 
 Provide your event requirements, event date, and total budget, and AuraPlan helps you:
 
-1. **Generate AI-Powered Recommendations** — Use Google's Gemini model to generate event-planning recommendations based on the user's requirements and budget.
+1. **Generate AI-Powered Recommendations (ideas, budget, timeline and vendor checklist)** — Use Google's Gemini model to generate event-planning recommendations based on the user's requirements and budget.
 2. **Plan and Monitor Budgets** — Organize planned expenses, review budget allocations, and account for a contingency reserve when generating recommendations.
 3. **Create and Organize Events** — Enter event details and maintain a structured view of your celebration's planning information.
 4. **Manage Event Timelines** — Review event-related tasks, milestones, and deadlines through the planning dashboard.
@@ -77,6 +77,8 @@ Run the available automated tests:
 
 ```bash
 npm test
+npm run test:coverage   # enforces coverage thresholds
+npm run lint && npm run typecheck
 ```
 
 Build the production application:

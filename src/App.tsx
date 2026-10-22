@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { BrowserRouter } from "react-router-dom";
 
@@ -47,9 +46,16 @@ export default function App() {
         }`}
         data-theme={theme}
       >
+        <a
+          href="#main-content"
+          className="sr-only rounded-lg bg-violet-700 px-4 py-2 text-sm font-medium text-white focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300"
+        >
+          Skip to main content
+        </a>
+
         <AppHeader theme={theme} onToggleTheme={toggleTheme} />
 
-        <div className="flex flex-1 flex-col">
+        <div id="main-content" tabIndex={-1} className="flex flex-1 flex-col outline-none">
           <AppRoutes />
         </div>
 

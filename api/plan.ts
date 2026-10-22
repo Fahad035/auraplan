@@ -1,81 +1,34 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { GoogleGenAI } from "@google/genai";
-import { z } from "zod";
+import {
+  GoogleGenAI,
+  type GenerateContentParameters,
+  type GenerateContentResponse,
+} from "@google/genai";
+import {
+  CONTINGENCY_PERCENT,
+  PlanRequestSchema,
+  RecommendationSchema,
+  createRateLimiter,
+  enforceBudgetLimit,
+} from "./_shared/recommendation";
 
 const MAX_REQUEST_BYTES = 8 * 1024;
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const MAX_REQUESTS_PER_WINDOW = 10;
-const CONTINGENCY_PERCENT = 10;
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
+const GEMINI_TIMEOUT_MS = 20_000;
+const MAX_ATTEMPTS = 2;
 
-const EventDateSchema = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format.")
-  .refine((value) => {
-    const parsed = new Date(`${value}T00:00:00.000Z`);
-
-    return (
-      !Number.isNaN(parsed.getTime()) &&
-      parsed.toISOString().slice(0, 10) === value
-    );
-  }, "Invalid calendar date.");
-
-const EventTypeSchema = z.enum(["wedding", "birthday", "community"]);
-
-const RequestSchema = z
-  .object({
-    eventType: EventTypeSchema,
-    eventDate: EventDateSchema,
-    location: z.string().trim().min(1).max(150),
-    guestCount: z.number().int().min(1).max(100_000),
-    totalBudget: z.number().int().positive().max(1_000_000_000),
-  })
-  .strict();
-
-const RecommendationSchema = z
-  .object({
-    ideas: z.array(z.string().trim().min(1).max(250)).min(3).max(8),
-    budgetItems: z
-      .array(
-        z
-          .object({
-            name: z.string().trim().min(1).max(80),
-            amount: z.number().finite().nonnegative(),
-          })
-          .strict(),
-      )
-      .min(3)
-      .max(10),
-    timeline: z
-      .array(
-        z
-          .object({
-            title: z.string().trim().min(1).max(120),
-            daysBeforeEvent: z.number().int().min(0).max(365),
-          })
-          .strict(),
-      )
-      .min(3)
-      .max(12),
-  })
-  .strict();
-
-type BudgetItem = {
-  name: string;
-  amount: number;
-};
-
-type RateLimitEntry = {
-  timestamps: number[];
-};
-
-const rateLimitStore = new Map<string, RateLimitEntry>();
+const checkRateLimit = createRateLimiter(
+  RATE_LIMIT_WINDOW_MS,
+  MAX_REQUESTS_PER_WINDOW,
+);
 
 function getClientIp(req: VercelRequest): string {
   const forwardedFor = req.headers["x-forwarded-for"];
   const realIp = req.headers["x-real-ip"];
 
-  // Best-effort client identifier. Forwarding headers are not a
-  // cryptographically trusted identity unless validated by the platform.
+  // Best-effort identifier; Vercel overwrites these headers at the edge.
   const candidate =
     (typeof realIp === "string" ? realIp : undefined) ??
     (typeof forwardedFor === "string"
@@ -93,49 +46,6 @@ function getClientIp(req: VercelRequest): string {
   return req.socket?.remoteAddress ?? "unknown";
 }
 
-function checkRateLimit(
-  ip: string,
-  now = Date.now(),
-): { allowed: boolean; remaining: number; resetAt: number } {
-  // Remove expired entries to limit memory growth.
-  for (const [key, entry] of rateLimitStore) {
-    entry.timestamps = entry.timestamps.filter(
-      (timestamp) => now - timestamp < RATE_LIMIT_WINDOW_MS,
-    );
-
-    if (entry.timestamps.length === 0) {
-      rateLimitStore.delete(key);
-    }
-  }
-
-  const entry = rateLimitStore.get(ip) ?? { timestamps: [] };
-
-  entry.timestamps = entry.timestamps.filter(
-    (timestamp) => now - timestamp < RATE_LIMIT_WINDOW_MS,
-  );
-
-  if (entry.timestamps.length >= MAX_REQUESTS_PER_WINDOW) {
-    const resetAt = entry.timestamps[0] + RATE_LIMIT_WINDOW_MS;
-
-    rateLimitStore.set(ip, entry);
-
-    return {
-      allowed: false,
-      remaining: 0,
-      resetAt,
-    };
-  }
-
-  entry.timestamps.push(now);
-  rateLimitStore.set(ip, entry);
-
-  return {
-    allowed: true,
-    remaining: MAX_REQUESTS_PER_WINDOW - entry.timestamps.length,
-    resetAt: now + RATE_LIMIT_WINDOW_MS,
-  };
-}
-
 function setRateLimitHeaders(
   res: VercelResponse,
   remaining: number,
@@ -146,78 +56,17 @@ function setRateLimitHeaders(
   res.setHeader("X-RateLimit-Reset", String(Math.ceil(resetAt / 1000)));
 }
 
-function getUtcDate(date: Date): Date {
-  return new Date(
-    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
-  );
-}
-
 function getDaysBetween(start: Date, end: Date): number {
-  const millisecondsPerDay = 24 * 60 * 60 * 1000;
-
-  return Math.floor(
-    (getUtcDate(end).getTime() - getUtcDate(start).getTime()) /
-      millisecondsPerDay,
-  );
+  return Math.floor((end.getTime() - start.getTime()) / 86_400_000);
 }
 
-function enforceBudgetLimit(
-  items: BudgetItem[],
-  totalBudget: number,
-  contingencyPercent = CONTINGENCY_PERCENT,
-): BudgetItem[] {
-  // Match the frontend budget calculation: reserve a rounded 10%.
-  const contingency = Math.round(totalBudget * (contingencyPercent / 100));
+function isTransientError(error: unknown): boolean {
+  const status =
+    typeof error === "object" && error !== null && "status" in error
+      ? Number((error as { status: unknown }).status)
+      : NaN;
 
-  const availableBudget = Math.max(0, totalBudget - contingency);
-
-  // Use whole-number expense amounts consistently.
-  const normalizedItems = items.map((item) => ({
-    ...item,
-    amount: Math.round(item.amount),
-  }));
-
-  if (normalizedItems.length === 0) {
-    return normalizedItems;
-  }
-
-  const largestAmount = Math.max(...normalizedItems.map((item) => item.amount));
-
-  if (largestAmount === 0) {
-    return normalizedItems;
-  }
-
-  // Divide by the largest amount first to avoid overflow when summing
-  // unexpectedly large, but individually finite, AI-generated amounts.
-  const normalizedTotal = normalizedItems.reduce(
-    (sum, item) => sum + item.amount / largestAmount,
-    0,
-  );
-
-  const allocated = normalizedItems.reduce((sum, item) => sum + item.amount, 0);
-
-  if (allocated <= availableBudget) {
-    return normalizedItems;
-  }
-
-  // Scale expenses proportionally while keeping integer amounts.
-  const scaledItems = normalizedItems.map((item) => ({
-    ...item,
-    amount: Math.floor(
-      (item.amount / largestAmount / normalizedTotal) * availableBudget,
-    ),
-  }));
-
-  let remaining =
-    availableBudget - scaledItems.reduce((sum, item) => sum + item.amount, 0);
-
-  // Distribute any rounding remainder without exceeding the budget.
-  for (let index = 0; remaining > 0; index = (index + 1) % scaledItems.length) {
-    scaledItems[index].amount += 1;
-    remaining -= 1;
-  }
-
-  return scaledItems;
+  return status === 429 || status === 500 || status === 503;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -284,7 +133,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   }
 
-  const parsedRequest = RequestSchema.safeParse(req.body);
+  const parsedRequest = PlanRequestSchema.safeParse(req.body);
 
   if (!parsedRequest.success) {
     return res.status(400).json({
@@ -324,8 +173,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const ai = new GoogleGenAI({ apiKey });
     const startedAt = Date.now();
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash-lite",
+    const request: GenerateContentParameters = {
+      model: GEMINI_MODEL,
       contents: [
         {
           role: "user",
@@ -363,6 +212,12 @@ Timeline requirements:
 Ideas requirements:
 - Return 3 to 8 specific ideas suitable for the event type, location,
   guest count, and budget.
+
+Vendor requirements:
+- Return 4 to 8 vendor types the host should book for this event
+  (for example Venue, Catering, Photography, Decoration, Entertainment).
+- "name" is a generic role such as "Caterer"; never invent business names.
+- "category" is one short word such as Venue or Catering.
 
 Return valid JSON matching the required response schema.`,
             },
@@ -402,12 +257,47 @@ Return valid JSON matching the required response schema.`,
                 propertyOrdering: ["title", "daysBeforeEvent"],
               },
             },
+            vendors: {
+              type: "ARRAY",
+              items: {
+                type: "OBJECT",
+                properties: {
+                  name: { type: "STRING" },
+                  category: { type: "STRING" },
+                },
+                required: ["name", "category"],
+                propertyOrdering: ["name", "category"],
+              },
+            },
           },
-          required: ["ideas", "budgetItems", "timeline"],
-          propertyOrdering: ["ideas", "budgetItems", "timeline"],
+          required: ["ideas", "budgetItems", "timeline", "vendors"],
+          propertyOrdering: ["ideas", "budgetItems", "timeline", "vendors"],
         },
       },
-    });
+    };
+
+    let response: GenerateContentResponse | undefined;
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+      try {
+        response = await ai.models.generateContent({
+          ...request,
+          config: {
+            ...request.config,
+            abortSignal: AbortSignal.timeout(GEMINI_TIMEOUT_MS),
+          },
+        });
+        break;
+      } catch (error) {
+        if (attempt === MAX_ATTEMPTS || !isTransientError(error)) {
+          throw error;
+        }
+      }
+    }
+
+    if (!response) {
+      throw new Error("No response received from the AI service.");
+    }
 
     console.info(`AuraPlan Gemini generation: ${Date.now() - startedAt} ms`);
 

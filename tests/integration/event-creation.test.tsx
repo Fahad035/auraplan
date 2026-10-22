@@ -129,7 +129,33 @@ describe("Event creation integration", () => {
       guestCount: 50,
       totalBudget: 50000,
       contingencyPercent: 10,
-      vendors: [],
+      vendors: expect.arrayContaining([
+        expect.objectContaining({
+          category: "Venue",
+          name: "Venue",
+          booked: false,
+        }),
+        expect.objectContaining({
+          category: "Catering",
+          name: "Caterer or bakery",
+          booked: false,
+        }),
+        expect.objectContaining({
+          category: "Decoration",
+          name: "Decorator",
+          booked: false,
+        }),
+        expect.objectContaining({
+          category: "Entertainment",
+          name: "Entertainer",
+          booked: false,
+        }),
+        expect.objectContaining({
+          category: "Photography",
+          name: "Photographer",
+          booked: false,
+        }),
+      ]),
       ideas: mockRecommendations.ideas,
     });
 

@@ -1,38 +1,10 @@
-
-import { z } from "zod";
 import type { EventType } from "../domain/schema";
+import {
+  RecommendationSchema,
+  type Recommendations,
+} from "../../api/_shared/recommendation";
 
-const RecommendationSchema = z
-  .object({
-    ideas: z.array(z.string().min(1).max(250)).min(3).max(8),
-    budgetItems: z
-      .array(
-        z
-          .object({
-            name: z.string().min(1).max(80),
-            amount: z.number().finite().nonnegative(),
-          })
-          .strict(),
-      )
-      .min(3)
-      .max(10),
-    timeline: z
-      .array(
-        z
-          .object({
-            title: z.string().min(1).max(120),
-            daysBeforeEvent: z.number().int().min(0).max(365),
-          })
-          .strict(),
-      )
-      .min(3)
-      .max(12),
-  })
-  .strict();
-
-export type EventRecommendations = z.infer<
-  typeof RecommendationSchema
->;
+export type EventRecommendations = Recommendations;
 
 export interface RecommendationOptions {
   eventType: EventType;

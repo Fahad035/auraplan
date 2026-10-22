@@ -1,9 +1,10 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { CalendarDays, MapPin, Users, Wallet, Sparkles } from "lucide-react";
 
 import Button from "../../components/ui/Button";
 import { EventPlanSchema, type EventType } from "../../domain/schema";
+import { buildVendorChecklist } from "../../domain/checklist";
 import { generateRecommendations } from "../../lib/api";
 import { loadEventPlans, saveEventPlans } from "../../lib/storage";
 
@@ -17,6 +18,12 @@ export default function EventCreationForm() {
   const [totalBudget, setTotalBudget] = useState("50000");
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+
+  const errorRef = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    if (error) errorRef.current?.focus();
+  }, [error]);
 
   const today = new Date();
 
@@ -106,7 +113,7 @@ export default function EventCreationForm() {
           amount: item.amount,
         })),
         timeline,
-        vendors: [],
+        vendors: buildVendorChecklist(eventType, recommendations.vendors),
         ideas: recommendations.ideas,
       });
 
@@ -143,11 +150,13 @@ export default function EventCreationForm() {
   return (
     <form
       onSubmit={handleSubmit}
+      aria-busy={isSaving}
+      aria-describedby={error ? "form-error" : undefined}
       className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"
     >
       <div className="mb-6">
         <div className="mb-3 flex size-11 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
-          <Sparkles className="size-5" />
+          <Sparkles className="size-5" aria-hidden="true" />
         </div>
 
         <h2 className="text-xl font-semibold text-slate-900">
@@ -181,7 +190,7 @@ export default function EventCreationForm() {
 
         <div>
           <label htmlFor="eventDate" className={labelClass}>
-            <CalendarDays className="mr-2 inline size-4" />
+            <CalendarDays className="mr-2 inline size-4" aria-hidden="true" />
             Event date
           </label>
 
@@ -199,7 +208,7 @@ export default function EventCreationForm() {
 
         <div>
           <label htmlFor="location" className={labelClass}>
-            <MapPin className="mr-2 inline size-4" />
+            <MapPin className="mr-2 inline size-4" aria-hidden="true" />
             Event location
           </label>
 
@@ -219,7 +228,7 @@ export default function EventCreationForm() {
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <label htmlFor="guestCount" className={labelClass}>
-              <Users className="mr-2 inline size-4" />
+              <Users className="mr-2 inline size-4" aria-hidden="true" />
               Expected guests
             </label>
 
@@ -239,7 +248,7 @@ export default function EventCreationForm() {
 
           <div>
             <label htmlFor="totalBudget" className={labelClass}>
-              <Wallet className="mr-2 inline size-4" />
+              <Wallet className="mr-2 inline size-4" aria-hidden="true" />
               Total budget (₹)
             </label>
 
@@ -261,6 +270,9 @@ export default function EventCreationForm() {
 
       {error && (
         <p
+          id="form-error"
+          ref={errorRef}
+          tabIndex={-1}
           role="alert"
           className="mt-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700"
         >
