@@ -12,6 +12,7 @@ import { z } from "zod";
 // fails if the two copies drift apart.
 
 
+
 const CONTINGENCY_PERCENT = 10;
 
 const EventTypeSchema = z.enum(["wedding", "birthday", "community"]);
