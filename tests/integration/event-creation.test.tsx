@@ -110,13 +110,13 @@ describe("Event creation integration", () => {
 
     expect(generateRecommendations).toHaveBeenCalledOnce();
 
-    expect(generateRecommendations).toHaveBeenCalledWith(
-      expect.stringContaining("Event type: birthday"),
-      {
-        totalBudget: 50000,
-        eventDate,
-      },
-    );
+    expect(generateRecommendations).toHaveBeenCalledWith({
+      eventType: "birthday",
+      eventDate: "2026-12-01",
+      location: "Hyderabad, Telangana",
+      guestCount: 50,
+      totalBudget: 50000,
+    });
 
     const savedPlans = loadEventPlans();
 

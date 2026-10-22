@@ -1,12 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  CalendarDays,
-  MapPin,
-  Users,
-  Wallet,
-  Sparkles,
-} from "lucide-react";
+import { CalendarDays, MapPin, Users, Wallet, Sparkles } from "lucide-react";
 
 import Button from "../../components/ui/Button";
 import { EventPlanSchema, type EventType } from "../../domain/schema";
@@ -69,20 +63,12 @@ export default function EventCreationForm() {
     setIsSaving(true);
 
     try {
-      const prompt = [
-        `Event type: ${eventType}`,
-        `Event date: ${eventDate}`,
-        `Location: ${trimmedLocation}`,
-        `Expected guests: ${guests}`,
-        `Total budget in INR: ${budget}`,
-        "Generate realistic recommendations appropriate for the location and guest count.",
-        "Keep the sum of budget item amounts within the available planning budget after reserving 10% for unexpected expenses.",
-        "Return practical planning tasks using daysBeforeEvent, where 0 means the event day.",
-      ].join("\n");
-
-      const recommendations = await generateRecommendations(prompt, {
-        totalBudget: budget,
+      const recommendations = await generateRecommendations({
+        eventType,
         eventDate,
+        location: trimmedLocation,
+        guestCount: guests,
+        totalBudget: budget,
       });
 
       const eventDateObject = new Date(`${eventDate}T12:00:00`);

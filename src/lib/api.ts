@@ -1,4 +1,6 @@
+
 import { z } from "zod";
+import type { EventType } from "../domain/schema";
 
 const RecommendationSchema = z
   .object({
@@ -33,12 +35,14 @@ export type EventRecommendations = z.infer<
 >;
 
 export interface RecommendationOptions {
-  totalBudget: number;
+  eventType: EventType;
   eventDate: string;
+  location: string;
+  guestCount: number;
+  totalBudget: number;
 }
 
 export async function generateRecommendations(
-  prompt: string,
   options: RecommendationOptions,
   signal?: AbortSignal,
 ): Promise<EventRecommendations> {
@@ -48,11 +52,7 @@ export async function generateRecommendations(
       "Content-Type": "application/json",
       Accept: "application/json",
     },
-    body: JSON.stringify({
-      prompt,
-      totalBudget: options.totalBudget,
-      eventDate: options.eventDate,
-    }),
+    body: JSON.stringify(options),
     signal,
   });
 
