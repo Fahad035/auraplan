@@ -75,11 +75,11 @@ export default function EventOverview({
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600">
             At a glance
           </p>
-          <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900">
+          <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
             Event overview
           </h2>
         </div>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-500 dark:text-slate-300">
           Updated as you manage your event
         </p>
       </div>
@@ -91,14 +91,14 @@ export default function EventOverview({
           return (
             <div
               key={stat.label}
-              className="group min-w-0 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-md sm:p-6"
+              className="group min-w-0 rounded-2xl border border-slate-200/80 bg-white dark:border-slate-700 dark:bg-slate-900 p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-md sm:p-6"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-slate-500">
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-300">
                     {stat.label}
                   </p>
-                  <p className="mt-3 wrap-break-word text-2xl font-bold tracking-tight text-slate-900">
+                  <p className="mt-3 wrap-break-word text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                     {stat.value}
                   </p>
                 </div>
@@ -111,7 +111,7 @@ export default function EventOverview({
               </div>
 
               <div
-                className="mt-5 h-1.5 overflow-hidden rounded-full bg-slate-100"
+                className="mt-5 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
                 aria-hidden="true"
               >
                 <div
@@ -120,7 +120,7 @@ export default function EventOverview({
                 />
               </div>
 
-              <p className="mt-3 text-xs leading-5 text-slate-500">
+              <p className="mt-3 text-xs leading-5 text-slate-500 dark:text-slate-300">
                 {stat.note}
               </p>
             </div>

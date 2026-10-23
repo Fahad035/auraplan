@@ -72,18 +72,18 @@ export default function EventCreationForm() {
       onSubmit={handleSubmit}
       aria-busy={isSaving}
       aria-describedby={error ? "form-error" : undefined}
-      className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"
+      className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm sm:p-8"
     >
       <div className="mb-6">
         <div className="mb-3 flex size-11 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
           <Sparkles className="size-5" aria-hidden="true" />
         </div>
 
-        <h2 className="text-xl font-semibold text-slate-900">
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
           Create your event
         </h2>
 
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
           Tell AuraPlan about your celebration. AI will create personalized
           ideas, budget estimates, and planning tasks for you.
         </p>
@@ -213,7 +213,7 @@ export default function EventCreationForm() {
       </div>
 
       {isSaving && (
-        <p className="mt-3 text-center text-sm text-slate-500" role="status">
+        <p className="mt-3 text-center text-sm text-slate-500 dark:text-slate-300" role="status">
           AuraPlan is preparing your ideas, budget, and timeline. This may take
           a few seconds.
         </p>

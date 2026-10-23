@@ -28,7 +28,7 @@ export default function ProgressSummaryCard({
   barStyle,
 }: ProgressSummaryCardProps) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm sm:p-5">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div
@@ -37,8 +37,8 @@ export default function ProgressSummaryCard({
             <Icon size={20} />
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-800">{title}</p>
-            <p className="mt-1 text-xs text-slate-500">{detail}</p>
+            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{title}</p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">{detail}</p>
           </div>
         </div>
         <span className={`text-lg font-bold ${percentageStyle}`}>

@@ -5,8 +5,8 @@ import { planningSteps } from "./content";
 export default function PlanningSidebar() {
   return (
     <aside className="space-y-4 lg:sticky lg:top-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 className="text-sm font-bold text-slate-900">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
           Your planning journey
         </h3>
 
@@ -14,7 +14,7 @@ export default function PlanningSidebar() {
           {planningSteps.map((step, index) => (
             <div key={step.number} className="flex gap-3">
               <div className="flex shrink-0 flex-col items-center">
-                <div className="flex size-9 items-center justify-center rounded-xl bg-violet-100 text-xs font-bold text-violet-700">
+                <div className="flex size-9 items-center justify-center rounded-xl bg-violet-100 text-xs font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">
                   {step.number}
                 </div>
 
@@ -24,10 +24,10 @@ export default function PlanningSidebar() {
               </div>
 
               <div className="pb-1">
-                <h4 className="text-sm font-semibold text-slate-800">
+                <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                   {step.title}
                 </h4>
-                <p className="mt-1 text-xs leading-5 text-slate-500">
+                <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-300">
                   {step.description}
                 </p>
               </div>

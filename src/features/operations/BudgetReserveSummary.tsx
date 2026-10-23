@@ -17,43 +17,43 @@ export default function BudgetReserveSummary({
       aria-label="Budget reserve summary"
       className="mt-6 grid gap-4 sm:grid-cols-2"
     >
-      <div className="flex min-w-0 items-start gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex min-w-0 items-start gap-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-sm">
         <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
           <PiggyBank size={20} />
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-slate-800">
+          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
             Protected contingency reserve
           </p>
-          <p className="mt-1 text-xs leading-5 text-slate-500">
+          <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-300">
             Funds set aside for unexpected event expenses.
           </p>
-          <p className="mt-3 wrap-break-word text-lg font-bold text-slate-900">
+          <p className="mt-3 wrap-break-word text-lg font-bold text-slate-900 dark:text-slate-100">
             {formatCurrency(budget.contingency)}
           </p>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">
             {contingencyPercent}% of your total budget
           </p>
         </div>
       </div>
 
-      <div className="flex min-w-0 items-start gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex min-w-0 items-start gap-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-sm">
         <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
           <Wallet size={20} />
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-slate-800">
+          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
             Available for planning
           </p>
-          <p className="mt-1 text-xs leading-5 text-slate-500">
+          <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-300">
             Your spending limit after reserving contingency funds.
           </p>
-          <p className="mt-3 wrap-break-word text-lg font-bold text-slate-900">
+          <p className="mt-3 wrap-break-word text-lg font-bold text-slate-900 dark:text-slate-100">
             {formatCurrency(budget.availableForPlanning)}
           </p>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">
             Before subtracting planned expenses
           </p>
         </div>

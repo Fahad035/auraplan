@@ -160,11 +160,11 @@ export default function VendorChecklist({
         <div className="py-5 text-center">
           <Store className="mx-auto size-8 text-slate-300" />
 
-          <p className="mt-3 text-sm font-medium text-slate-700">
+          <p className="mt-3 text-sm font-medium text-slate-700 dark:text-slate-300">
             No vendors added yet
           </p>
 
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">
             Add your first vendor using the form above.
           </p>
         </div>
@@ -194,24 +194,24 @@ export default function VendorChecklist({
                 </span>
               }
             >
-              <p className="wrap-break-word text-sm font-medium text-slate-800">
+              <p className="wrap-break-word text-sm font-medium text-slate-800 dark:text-slate-100">
                 {vendor.name}
               </p>
 
-              <p className="mt-1 text-xs text-slate-500">{vendor.category}</p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">{vendor.category}</p>
 
               {vendor.tip && (
-                <p className="mt-1 text-xs text-slate-600">{vendor.tip}</p>
+                <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{vendor.tip}</p>
               )}
 
               {vendor.bookBy && (
-                <p className="mt-1 text-xs font-medium text-slate-600">
+                <p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-300">
                   Book by {formatShortDate(vendor.bookBy)}
                 </p>
               )}
 
               {vendor.contact && (
-                <p className="mt-1 break-all text-xs text-slate-500">
+                <p className="mt-1 break-all text-xs text-slate-500 dark:text-slate-300">
                   {vendor.contact}
                 </p>
               )}

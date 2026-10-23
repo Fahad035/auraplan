@@ -100,7 +100,7 @@ export default function RefinePlan({ plan, onApply }: RefinePlanProps) {
           )}
 
           {isRefining && (
-            <p role="status" className="text-sm text-slate-600">
+            <p role="status" className="text-sm text-slate-600 dark:text-slate-300">
               Revising your plan. This may take a few seconds.
             </p>
           )}

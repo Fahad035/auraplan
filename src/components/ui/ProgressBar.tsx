@@ -17,7 +17,7 @@ export default function ProgressBar({
 }: ProgressBarProps) {
   return (
     <div
-      className={`h-2 overflow-hidden rounded-full bg-slate-100 ${className}`.trim()}
+      className={`h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800 ${className}`.trim()}
       role="progressbar"
       aria-label={label}
       aria-valuemin={0}

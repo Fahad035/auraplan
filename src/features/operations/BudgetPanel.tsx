@@ -102,14 +102,14 @@ export default function BudgetPanel({
   ];
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+    <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm sm:p-6">
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
           <Wallet size={20} />
         </div>
         <div>
-          <h2 className="font-semibold text-slate-900">Budget planner</h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100">Budget planner</h2>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
             Add expenses and adjust amounts to keep your event on budget.
           </p>
         </div>
@@ -117,9 +117,9 @@ export default function BudgetPanel({
 
       <div className="mt-6 grid gap-3 sm:grid-cols-3">
         {summaryTiles.map((tile) => (
-          <div key={tile.label} className="rounded-xl bg-slate-50 p-4">
-            <p className="text-xs text-slate-500">{tile.label}</p>
-            <p className="mt-2 font-semibold text-slate-900">
+          <div key={tile.label} className="rounded-xl bg-slate-50 dark:bg-slate-950 p-4">
+            <p className="text-xs text-slate-500 dark:text-slate-300">{tile.label}</p>
+            <p className="mt-2 font-semibold text-slate-900 dark:text-slate-100">
               {formatCurrency(tile.value)}
             </p>
           </div>
@@ -128,7 +128,7 @@ export default function BudgetPanel({
 
       <div className="mt-5">
         <div className="mb-2 flex flex-wrap justify-between gap-2 text-sm">
-          <span className="text-slate-500">Available after reserve</span>
+          <span className="text-slate-500 dark:text-slate-300">Available after reserve</span>
           <span
             className={`font-semibold ${
               budget.isOverBudget
@@ -154,22 +154,22 @@ export default function BudgetPanel({
         )}
       </div>
 
-      <div className="mt-7 border-t border-slate-100 pt-5">
-        <h3 className="text-sm font-semibold text-slate-800">
+      <div className="mt-7 border-t border-slate-100 dark:border-slate-700 pt-5">
+        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
           Expense categories
         </h3>
 
         {items.length === 0 ? (
-          <p className="mt-3 rounded-xl bg-slate-50 p-4 text-sm text-slate-500">
+          <p className="mt-3 rounded-xl bg-slate-50 dark:bg-slate-950 p-4 text-sm text-slate-500 dark:text-slate-300">
             No expenses yet. Add your first category below.
           </p>
         ) : (
           <div className="mt-3 space-y-3">
             <div className="hidden grid-cols-[minmax(0,1fr)_150px_40px] gap-2 px-1 sm:grid">
-              <span className="text-xs font-medium text-slate-500">
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-300">
                 Category name
               </span>
-              <span className="text-xs font-medium text-slate-500">
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-300">
                 Amount (₹)
               </span>
               <span aria-hidden="true" />
@@ -178,10 +178,10 @@ export default function BudgetPanel({
             {items.map((item) => (
               <div
                 key={item.id}
-                className="grid grid-cols-1 items-end gap-3 rounded-xl border border-slate-100 p-3 sm:grid-cols-[minmax(0,1fr)_150px_40px] sm:items-center sm:gap-2 sm:border-0 sm:p-0"
+                className="grid grid-cols-1 items-end gap-3 rounded-xl border border-slate-100 dark:border-slate-700 p-3 sm:grid-cols-[minmax(0,1fr)_150px_40px] sm:items-center sm:gap-2 sm:border-0 sm:p-0"
               >
                 <label className="block min-w-0">
-                  <span className="mb-1.5 block text-xs font-medium text-slate-600 sm:hidden">
+                  <span className="mb-1.5 block text-xs font-medium text-slate-600 dark:text-slate-300 sm:hidden">
                     Category name
                   </span>
                   <input
@@ -196,7 +196,7 @@ export default function BudgetPanel({
                 </label>
 
                 <label className="block min-w-0">
-                  <span className="mb-1.5 block text-xs font-medium text-slate-600 sm:hidden">
+                  <span className="mb-1.5 block text-xs font-medium text-slate-600 dark:text-slate-300 sm:hidden">
                     Amount (₹)
                   </span>
                   <input
@@ -228,10 +228,10 @@ export default function BudgetPanel({
 
       <form
         onSubmit={addItem}
-        className="mt-5 grid gap-3 border-t border-slate-100 pt-5 sm:grid-cols-[minmax(0,1fr)_150px_auto]"
+        className="mt-5 grid gap-3 border-t border-slate-100 dark:border-slate-700 pt-5 sm:grid-cols-[minmax(0,1fr)_150px_auto]"
       >
         <label className="block min-w-0">
-          <span className="mb-1.5 block text-xs font-medium text-slate-600">
+          <span className="mb-1.5 block text-xs font-medium text-slate-600 dark:text-slate-300">
             Category name
           </span>
           <input
@@ -244,7 +244,7 @@ export default function BudgetPanel({
         </label>
 
         <label className="block min-w-0">
-          <span className="mb-1.5 block text-xs font-medium text-slate-600">
+          <span className="mb-1.5 block text-xs font-medium text-slate-600 dark:text-slate-300">
             Amount (₹)
           </span>
           <input

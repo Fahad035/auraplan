@@ -128,7 +128,7 @@ export default function TimelinePanel({ items, onChange }: TimelinePanelProps) {
       />
 
       {sortedItems.length === 0 ? (
-        <p className="py-4 text-sm text-slate-500">
+        <p className="py-4 text-sm text-slate-500 dark:text-slate-300">
           No tasks yet. Add your first planning milestone above.
         </p>
       ) : (
@@ -150,7 +150,7 @@ export default function TimelinePanel({ items, onChange }: TimelinePanelProps) {
                 className={`wrap-break-word text-sm font-medium ${
                   item.completed
                     ? "text-slate-400 line-through"
-                    : "text-slate-800"
+                    : "text-slate-800 dark:text-slate-100"
                 }`}
               >
                 {item.title}
@@ -160,7 +160,7 @@ export default function TimelinePanel({ items, onChange }: TimelinePanelProps) {
                   </span>
                 )}
               </p>
-              <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
+              <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-300">
                 <CalendarDays size={13} />
                 {formatShortDate(item.date)}
               </p>

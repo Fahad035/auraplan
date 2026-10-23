@@ -27,7 +27,7 @@ export default function ChecklistRow({
   children,
 }: ChecklistRowProps) {
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-slate-100 p-3">
+    <div className="flex items-start gap-3 rounded-xl border border-slate-100 dark:border-slate-700 p-3">
       <button
         type="button"
         onClick={onToggle}

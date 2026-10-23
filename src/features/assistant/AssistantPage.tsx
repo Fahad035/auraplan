@@ -30,7 +30,7 @@ export default function AssistantPage() {
           return (
             <article
               key={feature.title}
-              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-md sm:p-6"
+              className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-md sm:p-6"
             >
               <div
                 className={`flex size-11 items-center justify-center rounded-xl ${feature.iconStyle}`}
@@ -38,11 +38,11 @@ export default function AssistantPage() {
                 <Icon size={21} />
               </div>
 
-              <h3 className="mt-4 text-base font-bold text-slate-900">
+              <h3 className="mt-4 text-base font-bold text-slate-900 dark:text-slate-100">
                 {feature.title}
               </h3>
 
-              <p className="mt-2 text-sm leading-6 text-slate-500">
+              <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-300">
                 {feature.description}
               </p>
             </article>
@@ -61,11 +61,11 @@ export default function AssistantPage() {
             Start with your vision
           </div>
 
-          <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+          <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
             Let's plan something wonderful.
           </h2>
 
-          <p className="mt-3 text-sm leading-7 text-slate-600">
+          <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
             Share a few details about your celebration. AuraPlan will use them
             to generate your event ideas, budget estimates, and planning tasks.
           </p>
@@ -80,11 +80,11 @@ export default function AssistantPage() {
         </div>
       </section>
 
-      <footer className="mt-10 flex flex-col gap-2 border-t border-slate-200 py-6 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
-        <p className="text-sm font-semibold text-slate-700">
+      <footer className="mt-10 flex flex-col gap-2 border-t border-slate-200 dark:border-slate-700 py-6 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+        <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
           AuraPlan — Every celebration, beautifully planned.
         </p>
-        <p className="text-xs leading-5 text-slate-500">
+        <p className="text-xs leading-5 text-slate-500 dark:text-slate-300">
           Thoughtful planning starts with a single idea.
         </p>
       </footer>
