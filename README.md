@@ -80,6 +80,17 @@ npm run build
 
 Tests cover the domain logic, the `/api/plan` handler (405/413/415/429/400/500/502/504 paths, retries, urgency flags, refinement), prompt construction and the injection boundary, the browser API client, storage, export, schema parity between the API and the client, and axe accessibility checks on the creation form and the operations page in both themes. CI runs lint, type check, coverage and `npm audit` on every push, plus CodeQL.
 
+## Quality, by the judging criteria
+
+| Criterion | Evidence | Where |
+|---|---|---|
+| Code quality | Strict TypeScript (`strict`), ESLint with complexity, nesting and parameter limits and `--max-warnings=0`, Prettier and EditorConfig, small single-purpose modules, and shared UI primitives. Business rules are pure functions in `src/domain`. Every field limit is declared once in `LIMITS`. | `eslint.config.js`, `src/domain/`, `src/components/ui/` |
+| Security | Server-side API key, strict zod validation of requests and model output, a 16 KB body cap, content-type and rate-limit checks, user text passed to the model only as tagged JSON data, a strict CSP and security headers, generic error messages, and `npm audit` plus CodeQL in CI. | `api/plan.ts`, `vercel.json`, `.github/workflows/` |
+| Efficiency | The model returns only judgment (weights, offsets, advice) and code does the arithmetic. Edits recompute locally with no extra AI call. The operations page is code-split, requests have a 20 s timeout with one retry on transient errors, and responses are never cached on shared caches. | `src/domain/planBuilder.ts`, `src/app/routes.tsx` |
+| Testing | 159 tests across domain logic, the API handler (every status path), the browser client, storage, export, components and full user flows, plus axe checks. Coverage is about 97% statements, and CI enforces minimum thresholds. A parity test keeps the API's inlined schema identical to the shared one. | `tests/`, `vite.config.ts` |
+| Accessibility | Skip link, landmarks, labelled controls, errors announced and moved into focus, live status messages, keyboard operation, visible focus rings, light and dark themes, reduced motion, and axe checks on the creation form and operations page in both themes. | `tests/accessibility/`, `src/index.css` |
+| Problem alignment | Weddings, birthdays and community events, each with a budget, a dated timeline, a vendor checklist and personalized ideas, plus plain-language refinement and export. | `src/features/`, `api/plan.ts` |
+
 ## Security
 
 - `GEMINI_API_KEY` exists only as a server-side environment variable. `.env*` files are git-ignored.

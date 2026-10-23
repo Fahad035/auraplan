@@ -1,7 +1,7 @@
 import { CheckCircle2, IndianRupee, PiggyBank, Wallet } from "lucide-react";
 
 import { budgetUsedPercent, type BudgetSummary } from "../../domain/budget";
-import { getTimelineProgress } from "../../domain/timeline";
+import type { getTimelineProgress } from "../../domain/timeline";
 import { formatCurrency } from "../../lib/format";
 
 type TimelineProgress = ReturnType<typeof getTimelineProgress>;
