@@ -191,8 +191,9 @@ function createRateLimiter(windowMs: number, maxRequests: number) {
   };
 }
 
-// --- exports (the API function inlines everything above this line) ---
+// --- public API ---
 export { allocateBudget, createRateLimiter };
 export type PlanRequest = z.infer<typeof PlanRequestSchema>;
+export type ModelOutput = z.infer<typeof ModelOutputSchema>;
 export type PreviousPlan = z.infer<typeof PreviousPlanSchema>;
 export type Recommendations = z.infer<typeof RecommendationSchema>;

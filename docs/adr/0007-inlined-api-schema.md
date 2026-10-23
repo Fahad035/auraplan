@@ -1,6 +1,6 @@
 # ADR 0007: Inline the shared schema in the serverless function
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR 0009
 - **Date:** 2026-10-22
 
 ## Context

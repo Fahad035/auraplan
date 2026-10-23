@@ -11,6 +11,7 @@ Short records of the significant technical decisions behind AuraPlan: the contex
 | [0005](0005-api-schema-validation.md)             | Validate requests and model output with zod at the API boundary |
 | [0006](0006-event-planning-state-management.md)   | Keep workflow state in React and API logic in one client module |
 | [0007](0007-inlined-api-schema.md)                | Inline the shared schema in the serverless function             |
+| [0009](0009-shared-schema-module.md)              | Share the schema module between the browser and the API         |
 | [0008](0008-model-judgment-code-arithmetic.md)    | The model supplies judgment; code does the arithmetic           |
 
 See also [`../ARCHITECTURE.md`](../ARCHITECTURE.md) and [`../RISKS.md`](../RISKS.md).

@@ -84,3 +84,4 @@ The application is designed for Vercel deployment. The serverless API requires `
 - [ADR 0006: Event Planning Workflow and State Management](adr/0006-event-planning-state-management.md)
 - [ADR 0007: Inline the Shared Schema in the Serverless Function](adr/0007-inlined-api-schema.md)
 - [ADR 0008: The Model Decides, Code Calculates](adr/0008-model-judgment-code-arithmetic.md)
+- [ADR 0009: Share the Schema Module Between Browser and API](adr/0009-shared-schema-module.md)

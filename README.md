@@ -51,13 +51,13 @@ api/plan.ts — Vercel serverless function
 
 **The model does the judgment and code does the arithmetic.** Gemini returns relative budget weights, task offsets and vendor advice. The server turns weights into whole-rupee amounts that sum exactly to the available budget (largest-remainder rounding) and flags tasks that would already be overdue. Language models are unreliable at both, so plans never contain totals that do not add up.
 
-| Path                           | Responsibility                                                                |
-| ------------------------------ | ----------------------------------------------------------------------------- |
-| `api/plan.ts`                  | HTTP handler, prompt, Gemini call, enrichment. Self-contained (see ADR 0007). |
-| `src/domain/recommendation.ts` | Shared zod schemas and pure helpers (also inlined into the API).              |
-| `src/domain/planBuilder.ts`    | Turns API results into plan data; applies refinements.                        |
-| `src/domain/*.ts`              | Budget, timeline, checklist, export and storage-schema logic.                 |
-| `src/features/`                | Assistant (creation form) and operations dashboard UI.                        |
+| Path                           | Responsibility                                                             |
+| ------------------------------ | -------------------------------------------------------------------------- |
+| `api/plan.ts`                  | HTTP handler, prompt, Gemini call, enrichment.                             |
+| `src/domain/recommendation.ts` | Zod schemas and pure helpers shared by the browser and the API (ADR 0009). |
+| `src/domain/planBuilder.ts`    | Turns API results into plan data; applies refinements.                     |
+| `src/domain/*.ts`              | Budget, timeline, checklist, export and storage-schema logic.              |
+| `src/features/`                | Assistant (creation form) and operations dashboard UI.                     |
 
 ## Run locally
 
@@ -89,7 +89,7 @@ Tests cover the domain logic, the `/api/plan` handler (405/413/415/429/400/500/5
 | Code quality      | Strict TypeScript (`strict`), ESLint with complexity, nesting and parameter limits and `--max-warnings=0`, Prettier and EditorConfig, small single-purpose modules, and shared UI primitives. Business rules are pure functions in `src/domain`. Every field limit is declared once in `LIMITS`.          | `eslint.config.js`, `src/domain/`, `src/components/ui/` |
 | Security          | Server-side API key, strict zod validation of requests and model output, a 16 KB body cap, content-type and rate-limit checks, user text passed to the model only as tagged JSON data, a strict CSP and security headers, generic error messages, and `npm audit` plus CodeQL in CI.                      | `api/plan.ts`, `vercel.json`, `.github/workflows/`      |
 | Efficiency        | The model returns only judgment (weights, offsets, advice) and code does the arithmetic. Edits recompute locally with no extra AI call. The operations page is code-split, requests have a 20 s timeout with one retry on transient errors, and responses are never cached on shared caches.              | `src/domain/planBuilder.ts`, `src/app/routes.tsx`       |
-| Testing           | 159 tests across domain logic, the API handler (every status path), the browser client, storage, export, components and full user flows, plus axe checks. Coverage is about 97% statements, and CI enforces minimum thresholds. A parity test keeps the API's inlined schema identical to the shared one. | `tests/`, `vite.config.ts`                              |
+| Testing           | 153 tests across domain logic, the API handler (every status path), the browser client, storage, export, components and full user flows, plus axe checks. Coverage is about 97% statements, and CI enforces minimum thresholds. A parity test keeps the API's inlined schema identical to the shared one. | `tests/`, `vite.config.ts`                              |
 | Accessibility     | Skip link, landmarks, labelled controls, errors announced and moved into focus, live status messages, keyboard operation, visible focus rings, light and dark themes, reduced motion, and axe checks on the creation form and operations page in both themes.                                             | `tests/accessibility/`, `src/index.css`                 |
 | Problem alignment | Weddings, birthdays and community events, each with a budget, a dated timeline, a vendor checklist and personalized ideas, plus plain-language refinement and export.                                                                                                                                     | `src/features/`, `api/plan.ts`                          |
 
