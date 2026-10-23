@@ -17,7 +17,9 @@ export default function SectionIntro({
       <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
         {title}
       </h2>
-      <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-300">{description}</p>
+      <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-300">
+        {description}
+      </p>
     </div>
   );
 }

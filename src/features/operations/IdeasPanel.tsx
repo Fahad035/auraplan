@@ -27,7 +27,9 @@ export default function IdeasPanel({ ideas }: IdeasPanelProps) {
                 <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
                   <Lightbulb size={15} aria-hidden="true" />
                 </span>
-                <span className="text-sm leading-6 text-slate-700 dark:text-slate-300">{idea}</span>
+                <span className="text-sm leading-6 text-slate-700 dark:text-slate-300">
+                  {idea}
+                </span>
               </li>
             ))}
           </ul>

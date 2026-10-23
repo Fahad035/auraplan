@@ -198,10 +198,14 @@ export default function VendorChecklist({
                 {vendor.name}
               </p>
 
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">{vendor.category}</p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">
+                {vendor.category}
+              </p>
 
               {vendor.tip && (
-                <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{vendor.tip}</p>
+                <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                  {vendor.tip}
+                </p>
               )}
 
               {vendor.bookBy && (

@@ -20,7 +20,9 @@ export default function Card({
       {(title || description) && (
         <div className="mb-5">
           {title && (
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              {title}
+            </h2>
           )}
           {description && (
             <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-300">

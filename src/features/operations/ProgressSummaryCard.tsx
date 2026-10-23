@@ -37,8 +37,12 @@ export default function ProgressSummaryCard({
             <Icon size={20} />
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{title}</p>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">{detail}</p>
+            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+              {title}
+            </p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">
+              {detail}
+            </p>
           </div>
         </div>
         <span className={`text-lg font-bold ${percentageStyle}`}>

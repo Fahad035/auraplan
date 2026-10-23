@@ -213,7 +213,10 @@ export default function EventCreationForm() {
       </div>
 
       {isSaving && (
-        <p className="mt-3 text-center text-sm text-slate-500 dark:text-slate-300" role="status">
+        <p
+          className="mt-3 text-center text-sm text-slate-500 dark:text-slate-300"
+          role="status"
+        >
           AuraPlan is preparing your ideas, budget, and timeline. This may take
           a few seconds.
         </p>

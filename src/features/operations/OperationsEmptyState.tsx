@@ -29,7 +29,9 @@ export default function OperationsEmptyState({
 
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
             Every celebration,
-            <span className="block text-violet-600 dark:text-violet-300">beautifully planned.</span>
+            <span className="block text-violet-600 dark:text-violet-300">
+              beautifully planned.
+            </span>
           </h1>
 
           <p className="mx-auto mt-4 max-w-lg text-sm leading-7 text-slate-600 dark:text-slate-300 sm:text-base">

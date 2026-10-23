@@ -108,7 +108,9 @@ export default function BudgetPanel({
           <Wallet size={20} />
         </div>
         <div>
-          <h2 className="font-semibold text-slate-900 dark:text-slate-100">Budget planner</h2>
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100">
+            Budget planner
+          </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
             Add expenses and adjust amounts to keep your event on budget.
           </p>
@@ -117,8 +119,13 @@ export default function BudgetPanel({
 
       <div className="mt-6 grid gap-3 sm:grid-cols-3">
         {summaryTiles.map((tile) => (
-          <div key={tile.label} className="rounded-xl bg-slate-50 dark:bg-slate-950 p-4">
-            <p className="text-xs text-slate-500 dark:text-slate-300">{tile.label}</p>
+          <div
+            key={tile.label}
+            className="rounded-xl bg-slate-50 dark:bg-slate-950 p-4"
+          >
+            <p className="text-xs text-slate-500 dark:text-slate-300">
+              {tile.label}
+            </p>
             <p className="mt-2 font-semibold text-slate-900 dark:text-slate-100">
               {formatCurrency(tile.value)}
             </p>
@@ -128,7 +135,9 @@ export default function BudgetPanel({
 
       <div className="mt-5">
         <div className="mb-2 flex flex-wrap justify-between gap-2 text-sm">
-          <span className="text-slate-500 dark:text-slate-300">Available after reserve</span>
+          <span className="text-slate-500 dark:text-slate-300">
+            Available after reserve
+          </span>
           <span
             className={`font-semibold ${
               budget.isOverBudget
