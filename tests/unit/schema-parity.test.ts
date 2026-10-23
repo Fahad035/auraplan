@@ -32,9 +32,17 @@ describe("inlined API schema parity", () => {
 
   it("keeps the rate limiter identical", () => {
     expect(
-      extract("api/plan.ts", "function createRateLimiter", "const MAX_REQUEST_BYTES"),
+      extract(
+        "api/plan.ts",
+        "function createRateLimiter",
+        "const MAX_REQUEST_BYTES",
+      ),
     ).toBe(
-      extract("src/domain/recommendation.ts", "function createRateLimiter", "// --- exports"),
+      extract(
+        "src/domain/recommendation.ts",
+        "function createRateLimiter",
+        "// --- exports",
+      ),
     );
   });
 });

@@ -4,10 +4,7 @@ import { Sparkles } from "lucide-react";
 import Button from "../../components/ui/Button";
 import Card from "../../components/ui/Card";
 import { labelClass, roomyInputClass } from "../../components/ui/fieldStyles";
-import {
-  applyRecommendations,
-  toPreviousPlan,
-} from "../../domain/planBuilder";
+import { applyRecommendations, toPreviousPlan } from "../../domain/planBuilder";
 import { LIMITS } from "../../domain/recommendation";
 import type { EventPlan } from "../../domain/schema";
 import { generateRecommendations } from "../../lib/api";
@@ -32,7 +29,10 @@ export default function RefinePlan({ plan, onApply }: RefinePlanProps) {
 
     const request = feedback.trim();
 
-    if (request.length < minFeedbackLength || request.length > maxFeedbackLength) {
+    if (
+      request.length < minFeedbackLength ||
+      request.length > maxFeedbackLength
+    ) {
       setError(
         `Describe the change in ${minFeedbackLength} to ${maxFeedbackLength} characters.`,
       );
@@ -72,7 +72,11 @@ export default function RefinePlan({ plan, onApply }: RefinePlanProps) {
         title="Refine your plan"
         description="Ask for changes in plain words, such as “make it cheaper” or “more eco-friendly”. Completed tasks and booked vendors are kept."
       >
-        <form onSubmit={handleSubmit} aria-busy={isRefining} className="space-y-3">
+        <form
+          onSubmit={handleSubmit}
+          aria-busy={isRefining}
+          className="space-y-3"
+        >
           <label htmlFor="refine-feedback" className={labelClass}>
             What would you like to change?
           </label>
@@ -102,7 +106,10 @@ export default function RefinePlan({ plan, onApply }: RefinePlanProps) {
           )}
 
           {done && !isRefining && (
-            <p role="status" className="text-sm text-emerald-700 dark:text-emerald-300">
+            <p
+              role="status"
+              className="text-sm text-emerald-700 dark:text-emerald-300"
+            >
               Your plan was updated.
             </p>
           )}

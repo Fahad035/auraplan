@@ -20,8 +20,7 @@ export interface EventInput {
 }
 
 export type EventInputResult =
-  | { ok: true; value: EventInput }
-  | { ok: false; error: string };
+  { ok: true; value: EventInput } | { ok: false; error: string };
 
 const fail = (error: string): EventInputResult => ({ ok: false, error });
 

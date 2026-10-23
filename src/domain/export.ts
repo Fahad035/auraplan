@@ -37,7 +37,8 @@ export function planToMarkdown(plan: EventPlan): string {
     "## Timeline",
     "",
     ...sortTimeline(plan.timeline).map(
-      (item) => `- [${item.completed ? "x" : " "}] ${item.date} - ${item.title}`,
+      (item) =>
+        `- [${item.completed ? "x" : " "}] ${item.date} - ${item.title}`,
     ),
     "",
     "## Vendors",

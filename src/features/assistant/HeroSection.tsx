@@ -32,9 +32,9 @@ export default function HeroSection() {
           </h2>
 
           <p className="mt-5 max-w-xl text-sm leading-7 text-slate-600 sm:text-base">
-            Big day or small gathering, start with your vision. AuraPlan
-            helps turn your event details into an organized starting plan
-            that you can review, customize, and manage.
+            Big day or small gathering, start with your vision. AuraPlan helps
+            turn your event details into an organized starting plan that you can
+            review, customize, and manage.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">

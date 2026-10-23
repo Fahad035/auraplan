@@ -74,7 +74,12 @@ describe("validateEventInput", () => {
 
   it("reports the guest count problem before any other", () => {
     expect(
-      errorFor({ guestCount: "0", totalBudget: "0", eventDate: "", location: "" }),
+      errorFor({
+        guestCount: "0",
+        totalBudget: "0",
+        eventDate: "",
+        location: "",
+      }),
     ).toBe("Enter a valid guest count between 1 and 100,000.");
   });
 });

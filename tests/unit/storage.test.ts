@@ -34,8 +34,6 @@ describe("event plan storage", () => {
   });
 
   it("refuses to save an invalid plan", () => {
-    expect(() =>
-      saveEventPlans([{ ...samplePlan, guestCount: 0 }]),
-    ).toThrow();
+    expect(() => saveEventPlans([{ ...samplePlan, guestCount: 0 }])).toThrow();
   });
 });

@@ -23,7 +23,9 @@ const valid = {
   ],
 };
 
-function mockFetch(response: Partial<Response> & { json?: () => Promise<unknown> }) {
+function mockFetch(
+  response: Partial<Response> & { json?: () => Promise<unknown> },
+) {
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response));
 }
 
@@ -40,13 +42,21 @@ describe("generateRecommendations", () => {
     expect(result.vendors).toEqual([]);
     expect(fetch).toHaveBeenCalledWith(
       "/api/plan",
-      expect.objectContaining({ method: "POST", body: JSON.stringify(options) }),
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify(options),
+      }),
     );
   });
 
   it("throws the server's error message", async () => {
-    mockFetch({ ok: false, json: async () => ({ error: "Too many requests." }) });
-    await expect(generateRecommendations(options)).rejects.toThrow("Too many requests.");
+    mockFetch({
+      ok: false,
+      json: async () => ({ error: "Too many requests." }),
+    });
+    await expect(generateRecommendations(options)).rejects.toThrow(
+      "Too many requests.",
+    );
   });
 
   it("throws a generic message for non-JSON errors", async () => {

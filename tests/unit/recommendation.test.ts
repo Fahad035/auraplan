@@ -93,9 +93,9 @@ describe("PlanRequestSchema", () => {
       PlanRequestSchema.safeParse({ ...valid, feedback: "make it cheaper" })
         .success,
     ).toBe(false);
-    expect(PlanRequestSchema.safeParse({ ...valid, previousPlan }).success).toBe(
-      false,
-    );
+    expect(
+      PlanRequestSchema.safeParse({ ...valid, previousPlan }).success,
+    ).toBe(false);
   });
 
   it.each([
@@ -136,20 +136,29 @@ describe("ModelOutputSchema", () => {
       vendors: [{ name: "Caterer", category: "Catering" }],
     });
 
-    expect(withVendor.vendors[0]).toMatchObject({ tip: "", bookByDaysBefore: 30 });
+    expect(withVendor.vendors[0]).toMatchObject({
+      tip: "",
+      bookByDaysBefore: 30,
+    });
   });
 
   it("rejects currency amounts and non-positive weights", () => {
     expect(
       ModelOutputSchema.safeParse({
         ...base,
-        budgetItems: [{ name: "Venue", amount: 5 }, ...base.budgetItems.slice(1)],
+        budgetItems: [
+          { name: "Venue", amount: 5 },
+          ...base.budgetItems.slice(1),
+        ],
       }).success,
     ).toBe(false);
     expect(
       ModelOutputSchema.safeParse({
         ...base,
-        budgetItems: [{ name: "Venue", weight: 0 }, ...base.budgetItems.slice(1)],
+        budgetItems: [
+          { name: "Venue", weight: 0 },
+          ...base.budgetItems.slice(1),
+        ],
       }).success,
     ).toBe(false);
   });
@@ -178,9 +187,9 @@ describe("RecommendationSchema", () => {
   });
 
   it("rejects too few ideas", () => {
-    expect(RecommendationSchema.safeParse({ ...base, ideas: ["a"] }).success).toBe(
-      false,
-    );
+    expect(
+      RecommendationSchema.safeParse({ ...base, ideas: ["a"] }).success,
+    ).toBe(false);
   });
 });
 
@@ -210,6 +219,8 @@ describe("buildVendorChecklist", () => {
 
   it("falls back to a template so the checklist is never empty", () => {
     expect(buildVendorChecklist("birthday").length).toBeGreaterThan(0);
-    expect(buildVendorChecklist("community").every((v) => !v.booked)).toBe(true);
+    expect(buildVendorChecklist("community").every((v) => !v.booked)).toBe(
+      true,
+    );
   });
 });

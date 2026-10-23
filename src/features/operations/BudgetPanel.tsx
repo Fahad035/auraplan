@@ -28,11 +28,7 @@ export default function BudgetPanel({
   const [amount, setAmount] = useState("");
   const [error, setError] = useState("");
 
-  const budget = calculateBudget(
-    totalBudget,
-    contingencyPercent,
-    items,
-  );
+  const budget = calculateBudget(totalBudget, contingencyPercent, items);
 
   function addItem(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -71,9 +67,7 @@ export default function BudgetPanel({
   function updateAmount(id: string, value: string) {
     if (value.trim() === "") {
       onChange(
-        items.map((item) =>
-          item.id === id ? { ...item, amount: 0 } : item,
-        ),
+        items.map((item) => (item.id === id ? { ...item, amount: 0 } : item)),
       );
       return;
     }
@@ -91,9 +85,7 @@ export default function BudgetPanel({
 
   function updateName(id: string, value: string) {
     onChange(
-      items.map((item) =>
-        item.id === id ? { ...item, name: value } : item,
-      ),
+      items.map((item) => (item.id === id ? { ...item, name: value } : item)),
     );
   }
 
@@ -116,9 +108,7 @@ export default function BudgetPanel({
           <Wallet size={20} />
         </div>
         <div>
-          <h2 className="font-semibold text-slate-900">
-            Budget planner
-          </h2>
+          <h2 className="font-semibold text-slate-900">Budget planner</h2>
           <p className="mt-1 text-sm text-slate-500">
             Add expenses and adjust amounts to keep your event on budget.
           </p>
@@ -138,12 +128,12 @@ export default function BudgetPanel({
 
       <div className="mt-5">
         <div className="mb-2 flex flex-wrap justify-between gap-2 text-sm">
-          <span className="text-slate-500">
-            Available after reserve
-          </span>
+          <span className="text-slate-500">Available after reserve</span>
           <span
             className={`font-semibold ${
-              budget.isOverBudget ? "text-red-600 dark:text-red-300" : "text-emerald-700 dark:text-emerald-300"
+              budget.isOverBudget
+                ? "text-red-600 dark:text-red-300"
+                : "text-emerald-700 dark:text-emerald-300"
             }`}
           >
             {formatCurrency(budget.remaining)}

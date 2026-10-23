@@ -1,14 +1,9 @@
 import { useState, type FormEvent } from "react";
-import {
-  CheckCircle2,
-  Circle,
-  Plus,
-  Store,
-  Trash2,
-} from "lucide-react";
+import { Plus, Store } from "lucide-react";
 
 import Button from "../../components/ui/Button";
 import Card from "../../components/ui/Card";
+import ChecklistRow from "../../components/ui/ChecklistRow";
 import { inputClass, labelClass } from "../../components/ui/fieldStyles";
 import ProgressBar from "../../components/ui/ProgressBar";
 import {
@@ -179,55 +174,18 @@ export default function VendorChecklist({
       ) : (
         <div className="space-y-3">
           {vendors.map((vendor) => (
-            <div
+            <ChecklistRow
               key={vendor.id}
-              className="flex items-start gap-3 rounded-xl border border-slate-100 p-3"
-            >
-              <button
-                type="button"
-                onClick={() => onChange(toggleVendorBooking(vendors, vendor.id))}
-                aria-label={
-                  vendor.booked
-                    ? `Mark ${vendor.name} unbooked`
-                    : `Mark ${vendor.name} booked`
-                }
-                className="mt-0.5 shrink-0 text-violet-600"
-              >
-                {vendor.booked ? (
-                  <CheckCircle2 size={20} />
-                ) : (
-                  <Circle size={20} />
-                )}
-              </button>
-
-              <div className="min-w-0 flex-1">
-                <p className="wrap-break-word text-sm font-medium text-slate-800">
-                  {vendor.name}
-                </p>
-
-                <p className="mt-1 text-xs text-slate-500">
-                  {vendor.category}
-                </p>
-
-                {vendor.tip && (
-                  <p className="mt-1 text-xs text-slate-600">{vendor.tip}</p>
-                )}
-
-                {vendor.bookBy && (
-                  <p className="mt-1 text-xs font-medium text-slate-600">
-                    Book by{" "}
-                    {formatShortDate(vendor.bookBy)}
-                  </p>
-                )}
-
-                {vendor.contact && (
-                  <p className="mt-1 break-all text-xs text-slate-500">
-                    {vendor.contact}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex shrink-0 flex-col items-end gap-2">
+              checked={vendor.booked}
+              toggleLabel={
+                vendor.booked
+                  ? `Mark ${vendor.name} unbooked`
+                  : `Mark ${vendor.name} booked`
+              }
+              onToggle={() => onChange(toggleVendorBooking(vendors, vendor.id))}
+              deleteLabel={`Delete ${vendor.name}`}
+              onDelete={() => deleteVendor(vendor.id)}
+              aside={
                 <span
                   className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                     vendor.booked
@@ -237,17 +195,30 @@ export default function VendorChecklist({
                 >
                   {vendor.booked ? "Booked" : "Pending"}
                 </span>
+              }
+            >
+              <p className="wrap-break-word text-sm font-medium text-slate-800">
+                {vendor.name}
+              </p>
 
-                <button
-                  type="button"
-                  onClick={() => deleteVendor(vendor.id)}
-                  aria-label={`Delete ${vendor.name}`}
-                  className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </div>
+              <p className="mt-1 text-xs text-slate-500">{vendor.category}</p>
+
+              {vendor.tip && (
+                <p className="mt-1 text-xs text-slate-600">{vendor.tip}</p>
+              )}
+
+              {vendor.bookBy && (
+                <p className="mt-1 text-xs font-medium text-slate-600">
+                  Book by {formatShortDate(vendor.bookBy)}
+                </p>
+              )}
+
+              {vendor.contact && (
+                <p className="mt-1 break-all text-xs text-slate-500">
+                  {vendor.contact}
+                </p>
+              )}
+            </ChecklistRow>
           ))}
         </div>
       )}

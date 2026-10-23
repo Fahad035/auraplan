@@ -11,10 +11,23 @@ const start: BudgetItem[] = [
   { id: "b2", name: "Catering", amount: 40000 },
 ];
 
-function Harness({ total = 100000, initial = start }: { total?: number; initial?: BudgetItem[] }) {
+function Harness({
+  total = 100000,
+  initial = start,
+}: {
+  total?: number;
+  initial?: BudgetItem[];
+}) {
   const [items, setItems] = useState<BudgetItem[]>(initial);
 
-  return <BudgetPanel totalBudget={total} contingencyPercent={10} items={items} onChange={setItems} />;
+  return (
+    <BudgetPanel
+      totalBudget={total}
+      contingencyPercent={10}
+      items={items}
+      onChange={setItems}
+    />
+  );
 }
 
 afterEach(cleanup);
@@ -24,7 +37,9 @@ describe("BudgetPanel", () => {
     render(<Harness />);
 
     expect(screen.getByText(/Reserve \(10%\)/)).toBeInTheDocument();
-    expect(screen.getByRole("progressbar", { name: /budget allocation/i })).toHaveAttribute("aria-valuenow", "78");
+    expect(
+      screen.getByRole("progressbar", { name: /budget allocation/i }),
+    ).toHaveAttribute("aria-valuenow", "78");
   });
 
   it("adds an expense and clears the form", async () => {
@@ -48,7 +63,9 @@ describe("BudgetPanel", () => {
 
     await user.type(screen.getByPlaceholderText(/photography/i), "Music");
     await user.click(screen.getByRole("button", { name: /add expense/i }));
-    expect(screen.getByRole("alert")).toHaveTextContent(/valid, non-negative amount/i);
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      /valid, non-negative amount/i,
+    );
   });
 
   it("edits amounts and deletes an expense", async () => {
@@ -66,7 +83,9 @@ describe("BudgetPanel", () => {
 
   it("warns when over budget and explains an empty list", () => {
     render(<Harness total={50000} />);
-    expect(screen.getByRole("alert")).toHaveTextContent(/exceed the available budget by/i);
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      /exceed the available budget by/i,
+    );
 
     cleanup();
     render(<Harness initial={[]} />);

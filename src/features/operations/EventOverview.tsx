@@ -1,9 +1,4 @@
-import {
-  CheckCircle2,
-  IndianRupee,
-  PiggyBank,
-  Wallet,
-} from "lucide-react";
+import { CheckCircle2, IndianRupee, PiggyBank, Wallet } from "lucide-react";
 
 import { budgetUsedPercent, type BudgetSummary } from "../../domain/budget";
 import { getTimelineProgress } from "../../domain/timeline";
@@ -26,10 +21,7 @@ export default function EventOverview({
     budget.availableForPlanning > 0
       ? Math.max(
           0,
-          Math.min(
-            100,
-            (budget.remaining / budget.availableForPlanning) * 100,
-          ),
+          Math.min(100, (budget.remaining / budget.availableForPlanning) * 100),
         )
       : 0;
 

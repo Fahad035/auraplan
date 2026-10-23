@@ -202,7 +202,6 @@ function createRateLimiter(windowMs: number, maxRequests: number) {
   };
 }
 
-
 const MAX_REQUEST_BYTES = 16 * 1024;
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const MAX_REQUESTS_PER_WINDOW = 10;
@@ -243,15 +242,15 @@ const MESSAGES = {
   methodNotAllowed: "Method not allowed.",
   notJson: "Requests must be sent as application/json.",
   tooLarge: "The request is too large. Please shorten your event details.",
-  rateLimited: "Too many planning requests. Please wait a minute and try again.",
+  rateLimited:
+    "Too many planning requests. Please wait a minute and try again.",
   invalidBody: "Please provide valid event planning details.",
   invalidDetails:
     "Please provide valid event details, a whole-number budget, a valid event date, and (when refining) a short change request.",
   pastDate:
     "The event date is in the past. Please choose today or a future date.",
   unavailable: "The AI service is temporarily unavailable.",
-  emptyResponse:
-    "The AI service returned an empty response. Please try again.",
+  emptyResponse: "The AI service returned an empty response. Please try again.",
   unreadableResponse:
     "The AI response could not be processed. Please try again.",
   invalidPlan: "The AI generated an invalid plan. Please try again.",

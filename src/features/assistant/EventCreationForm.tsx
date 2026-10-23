@@ -8,7 +8,7 @@ import { todayLocalDate } from "../../domain/dates";
 import { validateEventInput } from "../../domain/eventInput";
 import { buildEventPlan } from "../../domain/planBuilder";
 import { LIMITS } from "../../domain/recommendation";
-import type { EventType } from "../../domain/schema";
+import { EventTypeSchema, type EventType } from "../../domain/schema";
 import { generateRecommendations } from "../../lib/api";
 import { loadEventPlans, saveEventPlans } from "../../lib/storage";
 
@@ -99,7 +99,11 @@ export default function EventCreationForm() {
             id="eventType"
             name="eventType"
             value={eventType}
-            onChange={(e) => setEventType(e.target.value as EventType)}
+            onChange={(e) => {
+              const parsed = EventTypeSchema.safeParse(e.target.value);
+
+              if (parsed.success) setEventType(parsed.data);
+            }}
             className={inputClass}
           >
             <option value="wedding">Wedding</option>

@@ -1,4 +1,3 @@
-
 import type { ButtonHTMLAttributes } from "react";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -10,7 +9,7 @@ const baseStyles =
 
 const variantStyles: Record<NonNullable<ButtonProps["variant"]>, string> = {
   primary: "bg-violet-600 text-white hover:bg-violet-700",
-    secondary:
+  secondary:
     "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800",
   danger: "bg-red-600 text-white hover:bg-red-700",
 };

@@ -10,9 +10,19 @@ afterEach(cleanup);
 
 describe("IdeasPanel", () => {
   it("lists every idea", () => {
-    render(<IdeasPanel ideas={["Marigold mandap: fits Jaipur", "Live shehnai: welcome", "Welcome kits: sweets"]} />);
+    render(
+      <IdeasPanel
+        ideas={[
+          "Marigold mandap: fits Jaipur",
+          "Live shehnai: welcome",
+          "Welcome kits: sweets",
+        ]}
+      />,
+    );
 
-    expect(screen.getByRole("heading", { name: /personalized ideas/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /personalized ideas/i }),
+    ).toBeInTheDocument();
     expect(screen.getAllByRole("listitem")).toHaveLength(3);
   });
 
@@ -37,8 +47,12 @@ describe("page titles and 404", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("heading", { level: 1, name: /page not found/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /back to the planner/i })).toHaveAttribute("href", "/");
+    expect(
+      screen.getByRole("heading", { level: 1, name: /page not found/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /back to the planner/i }),
+    ).toHaveAttribute("href", "/");
     expect(document.title).toBe("Page not found | AuraPlan");
   });
 });

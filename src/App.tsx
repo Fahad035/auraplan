@@ -43,7 +43,9 @@ export default function App() {
     <BrowserRouter>
       <div
         className={`flex min-h-screen flex-col ${
-          theme === "dark" ? "dark bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900"
+          theme === "dark"
+            ? "dark bg-slate-950 text-slate-100"
+            : "bg-slate-50 text-slate-900"
         }`}
         data-theme={theme}
       >
@@ -56,7 +58,11 @@ export default function App() {
 
         <AppHeader theme={theme} onToggleTheme={toggleTheme} />
 
-        <div id="main-content" tabIndex={-1} className="flex flex-1 flex-col outline-none">
+        <div
+          id="main-content"
+          tabIndex={-1}
+          className="flex flex-1 flex-col outline-none"
+        >
           <ErrorBoundary>
             <AppRoutes />
           </ErrorBoundary>

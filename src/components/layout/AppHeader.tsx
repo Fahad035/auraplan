@@ -1,4 +1,3 @@
-
 import { Link, NavLink } from "react-router-dom";
 import {
   CalendarHeart,
@@ -13,10 +12,7 @@ type AppHeaderProps = {
   onToggleTheme: () => void;
 };
 
-export default function AppHeader({
-  theme,
-  onToggleTheme,
-}: AppHeaderProps) {
+export default function AppHeader({ theme, onToggleTheme }: AppHeaderProps) {
   const isDark = theme === "dark";
 
   const navClass = ({ isActive }: { isActive: boolean }) =>

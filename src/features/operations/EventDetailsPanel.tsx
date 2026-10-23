@@ -1,10 +1,4 @@
-import {
-  CalendarDays,
-  Clock3,
-  MapPin,
-  Sparkles,
-  Users,
-} from "lucide-react";
+import { CalendarDays, Clock3, MapPin, Sparkles, Users } from "lucide-react";
 
 import { daysFromToday } from "../../domain/dates";
 import type { EventPlan } from "../../domain/schema";
@@ -22,9 +16,7 @@ function describeCountdown(days: number | null): string {
   return `${days} days to go`;
 }
 
-export default function EventDetailsPanel({
-  plan,
-}: EventDetailsPanelProps) {
+export default function EventDetailsPanel({ plan }: EventDetailsPanelProps) {
   const detailTiles = [
     {
       label: "Event date",
@@ -78,8 +70,8 @@ export default function EventDetailsPanel({
           </h2>
 
           <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-            Keep your event details, budget, tasks, and bookings updated as
-            your plans come together.
+            Keep your event details, budget, tasks, and bookings updated as your
+            plans come together.
           </p>
         </div>
 

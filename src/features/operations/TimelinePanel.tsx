@@ -1,14 +1,9 @@
 import { useState, type FormEvent } from "react";
-import {
-  CalendarDays,
-  CheckCircle2,
-  Circle,
-  Plus,
-  Trash2,
-} from "lucide-react";
+import { CalendarDays, Plus } from "lucide-react";
 
 import Button from "../../components/ui/Button";
 import Card from "../../components/ui/Card";
+import ChecklistRow from "../../components/ui/ChecklistRow";
 import { inputClass, labelClass } from "../../components/ui/fieldStyles";
 import ProgressBar from "../../components/ui/ProgressBar";
 import { todayLocalDate } from "../../domain/dates";
@@ -142,57 +137,37 @@ export default function TimelinePanel({
       ) : (
         <div className="space-y-3">
           {sortedItems.map((item) => (
-            <div
+            <ChecklistRow
               key={item.id}
-              className="flex items-start gap-3 rounded-xl border border-slate-100 p-3"
+              checked={item.completed}
+              toggleLabel={
+                item.completed
+                  ? `Mark ${item.title} incomplete`
+                  : `Mark ${item.title} complete`
+              }
+              onToggle={() => toggleTask(item.id)}
+              deleteLabel={`Delete ${item.title}`}
+              onDelete={() => deleteTask(item.id)}
             >
-              <button
-                type="button"
-                onClick={() => toggleTask(item.id)}
-                aria-label={
+              <p
+                className={`wrap-break-word text-sm font-medium ${
                   item.completed
-                    ? `Mark ${item.title} incomplete`
-                    : `Mark ${item.title} complete`
-                }
-                className="mt-0.5 shrink-0 text-violet-600"
+                    ? "text-slate-400 line-through"
+                    : "text-slate-800"
+                }`}
               >
-                {item.completed ? (
-                  <CheckCircle2 size={20} />
-                ) : (
-                  <Circle size={20} />
+                {item.title}
+                {item.urgent && !item.completed && (
+                  <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                    Do now
+                  </span>
                 )}
-              </button>
-
-              <div className="min-w-0 flex-1">
-                <p
-                  className={`wrap-break-word text-sm font-medium ${
-                    item.completed
-                      ? "text-slate-400 line-through"
-                      : "text-slate-800"
-                  }`}
-                >
-                  {item.title}
-                  {item.urgent && !item.completed && (
-                    <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800">
-                      Do now
-                    </span>
-                  )}
-                </p>
-                <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
-                  <CalendarDays size={13} />
-                  {formatShortDate(item.date)}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => deleteTask(item.id)}
-                aria-label={`Delete ${item.title}`}
-                className="shrink-0 rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
+              </p>
+              <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
+                <CalendarDays size={13} />
+                {formatShortDate(item.date)}
+              </p>
+            </ChecklistRow>
           ))}
         </div>
       )}

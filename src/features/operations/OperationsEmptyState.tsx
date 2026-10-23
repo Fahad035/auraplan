@@ -1,4 +1,3 @@
-
 import {
   ArrowRight,
   CalendarDays,
@@ -30,15 +29,13 @@ export default function OperationsEmptyState({
 
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
             Every celebration,
-            <span className="block text-violet-600">
-              beautifully planned.
-            </span>
+            <span className="block text-violet-600">beautifully planned.</span>
           </h1>
 
           <p className="mx-auto mt-4 max-w-lg text-sm leading-7 text-slate-600 sm:text-base">
-            Bring your ideas to life with AI-generated recommendations,
-            a practical budget, an organized timeline, and vendor tracking
-            in one workspace.
+            Bring your ideas to life with AI-generated recommendations, a
+            practical budget, an organized timeline, and vendor tracking in one
+            workspace.
           </p>
 
           <div className="mt-8 flex justify-center">

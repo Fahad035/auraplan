@@ -26,9 +26,7 @@ export function calculateBudget(
     throw new Error("Contingency must be between 0% and 50%.");
   }
 
-  const contingency = Math.round(
-    totalBudget * (contingencyPercent / 100),
-  );
+  const contingency = Math.round(totalBudget * (contingencyPercent / 100));
 
   const allocated = items.reduce((sum, item) => {
     if (!Number.isFinite(item.amount) || item.amount < 0) {
@@ -59,8 +57,5 @@ export function budgetUsedPercent(
     return budget.allocated > 0 ? 100 : 0;
   }
 
-  return Math.min(
-    100,
-    (budget.allocated / budget.availableForPlanning) * 100,
-  );
+  return Math.min(100, (budget.allocated / budget.availableForPlanning) * 100);
 }

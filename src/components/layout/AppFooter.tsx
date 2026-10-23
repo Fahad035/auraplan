@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Clock3 } from "lucide-react";
 
@@ -59,7 +58,6 @@ function DigitalClock() {
   );
 }
 
-
 export default function AppFooter() {
   const currentYear = new Date().getFullYear();
 
@@ -81,4 +79,3 @@ export default function AppFooter() {
     </footer>
   );
 }
-

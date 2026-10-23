@@ -17,6 +17,22 @@ Describe your event once (type, date, location, guests, budget) and AuraPlan bui
 
 > Plans are AI-generated suggestions. Verify quotes, contracts, permits and availability before paying or signing anything.
 
+## Challenge, approach and assumptions
+
+**Chosen vertical:** Challenge 5, Celebration & Event Planner. AuraPlan helps a host who is organizing a wedding, birthday or community event on a fixed budget.
+
+**Approach and logic**
+- The host gives the event type, date, location, guest count and budget. The planner turns that context into decisions: how to split the budget, which tasks to do and when, which vendors to book, and which ideas fit.
+- The AI model supplies judgment (relative budget weights, task offsets, vendor advice, tailored ideas). Plain code does the arithmetic, so budgets always add up and dates are always achievable.
+- Time pressure changes the plan: tasks that would already be overdue are pulled to today and flagged "Do now", and vendor book-by dates are capped at today.
+- The host stays in control: every task, expense and vendor is editable, and "Refine plan" revises the plan from a plain-language request while keeping completed tasks and booked vendors.
+
+**Assumptions**
+- Amounts are in Indian rupees (INR), and a 10% contingency reserve is held back from the budget.
+- Costs and vendor advice are estimates, not quotes. Vendor names are generic roles, never real businesses.
+- Plans are stored in the browser only (no accounts), so they do not sync across devices.
+- Dates are calendar dates in the host's local time; the server compares them in UTC.
+
 ## How it works
 
 ```

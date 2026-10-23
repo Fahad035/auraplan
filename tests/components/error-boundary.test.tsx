@@ -35,10 +35,14 @@ describe("ErrorBoundary", () => {
       </ErrorBoundary>,
     );
 
-    expect(screen.getByRole("heading", { name: /something went wrong/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /something went wrong/i }),
+    ).toBeInTheDocument();
     expect(logged).toHaveBeenCalled();
 
-    await userEvent.setup().click(screen.getByRole("button", { name: /reload page/i }));
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: /reload page/i }));
     expect(reload).toHaveBeenCalledOnce();
 
     vi.unstubAllGlobals();

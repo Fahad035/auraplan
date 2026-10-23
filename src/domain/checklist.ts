@@ -6,15 +6,15 @@ export function toggleVendorBooking(
   vendorId: string,
 ): Vendor[] {
   return vendors.map((vendor) =>
-    vendor.id === vendorId
-      ? { ...vendor, booked: !vendor.booked }
-      : vendor,
+    vendor.id === vendorId ? { ...vendor, booked: !vendor.booked } : vendor,
   );
 }
 
-export function getVendorProgress(
-  vendors: Vendor[],
-): { booked: number; total: number; percentage: number } {
+export function getVendorProgress(vendors: Vendor[]): {
+  booked: number;
+  total: number;
+  percentage: number;
+} {
   const booked = vendors.filter((vendor) => vendor.booked).length;
   const total = vendors.length;
 

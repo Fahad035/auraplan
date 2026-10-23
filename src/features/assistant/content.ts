@@ -81,12 +81,14 @@ export const planningSteps: PlanningStep[] = [
   {
     number: "01",
     title: "Tell us about your event",
-    description: "Choose the occasion, date, location, guest count, and budget.",
+    description:
+      "Choose the occasion, date, location, guest count, and budget.",
   },
   {
     number: "02",
     title: "Generate your plan",
-    description: "AuraPlan creates ideas, expense estimates, and planning tasks.",
+    description:
+      "AuraPlan creates ideas, expense estimates, and planning tasks.",
   },
   {
     number: "03",

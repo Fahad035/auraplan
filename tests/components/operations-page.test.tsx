@@ -13,7 +13,11 @@ vi.mock("../../src/domain/export", async (importOriginal) => ({
   downloadTextFile: vi.fn(),
 }));
 
-function makePlan(id: string, title: string, overrides: Partial<EventPlan> = {}): EventPlan {
+function makePlan(
+  id: string,
+  title: string,
+  overrides: Partial<EventPlan> = {},
+): EventPlan {
   return {
     id,
     title,
@@ -24,8 +28,17 @@ function makePlan(id: string, title: string, overrides: Partial<EventPlan> = {})
     totalBudget: 800000,
     contingencyPercent: 10,
     budgetItems: [{ id: `${id}-b1`, name: "Venue", amount: 300000 }],
-    timeline: [{ id: `${id}-t1`, title: "Book venue", date: "2030-05-01", completed: false }],
-    vendors: [{ id: `${id}-v1`, name: "Caterer", category: "Catering", booked: false }],
+    timeline: [
+      {
+        id: `${id}-t1`,
+        title: "Book venue",
+        date: "2030-05-01",
+        completed: false,
+      },
+    ],
+    vendors: [
+      { id: `${id}-v1`, name: "Caterer", category: "Catering", booked: false },
+    ],
     ideas: [`${title} idea one`, `${title} idea two`, `${title} idea three`],
     ...overrides,
   } as EventPlan;
@@ -33,7 +46,11 @@ function makePlan(id: string, title: string, overrides: Partial<EventPlan> = {})
 
 function renderPage(eventId?: string) {
   return render(
-    <MemoryRouter initialEntries={[{ pathname: "/operations", state: eventId ? { eventId } : undefined }]}>
+    <MemoryRouter
+      initialEntries={[
+        { pathname: "/operations", state: eventId ? { eventId } : undefined },
+      ]}
+    >
       <Routes>
         <Route path="/" element={<h1>Home</h1>} />
         <Route path="/operations" element={<OperationsPage />} />
@@ -53,11 +70,15 @@ afterEach(() => {
 });
 
 describe("OperationsPage", () => {
-    it("shows the empty state when there are no events", () => {
+  it("shows the empty state when there are no events", () => {
     renderPage();
 
-    expect(screen.queryByRole("group", { name: /export and print plan/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /export json/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("group", { name: /export and print plan/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /export json/i }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/your events/i)).not.toBeInTheDocument();
     expect(document.title).toBe("Operations | AuraPlan");
   });
@@ -66,8 +87,12 @@ describe("OperationsPage", () => {
     saveEventPlans([makePlan("p1", "Wedding Celebration")]);
     renderPage();
 
-    expect(screen.getByRole("heading", { level: 1, name: "Wedding Celebration" })).toBeInTheDocument();
-    expect(screen.getByText("Wedding Celebration idea one")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Wedding Celebration" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Wedding Celebration idea one"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Planning timeline")).toBeInTheDocument();
     expect(screen.getByText("Vendor checklist")).toBeInTheDocument();
     expect(document.title).toBe("Wedding Celebration · Operations | AuraPlan");
@@ -75,15 +100,24 @@ describe("OperationsPage", () => {
 
   it("opens the requested event and switches between events", async () => {
     const user = userEvent.setup();
-    saveEventPlans([makePlan("p1", "Wedding Celebration"), makePlan("p2", "Birthday Celebration")]);
+    saveEventPlans([
+      makePlan("p1", "Wedding Celebration"),
+      makePlan("p2", "Birthday Celebration"),
+    ]);
     renderPage("p1");
 
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Wedding Celebration");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "Wedding Celebration",
+    );
 
     await user.selectOptions(screen.getByLabelText(/your events/i), "p2");
 
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Birthday Celebration");
-    expect(screen.getByText("Birthday Celebration idea one")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "Birthday Celebration",
+    );
+    expect(
+      screen.getByText("Birthday Celebration idea one"),
+    ).toBeInTheDocument();
   });
 
   it("does not show the switcher for a single event", () => {
@@ -98,7 +132,9 @@ describe("OperationsPage", () => {
     saveEventPlans([makePlan("p1", "Wedding Celebration")]);
     renderPage();
 
-    await user.click(screen.getByRole("button", { name: "Mark Caterer booked" }));
+    await user.click(
+      screen.getByRole("button", { name: "Mark Caterer booked" }),
+    );
 
     expect(loadEventPlans()[0].vendors[0].booked).toBe(true);
   });
@@ -111,9 +147,13 @@ describe("OperationsPage", () => {
       throw new Error("quota exceeded");
     });
 
-    await user.click(screen.getByRole("button", { name: "Mark Caterer booked" }));
+    await user.click(
+      screen.getByRole("button", { name: "Mark Caterer booked" }),
+    );
 
-    expect(screen.getByRole("alert")).toHaveTextContent(/unable to save your changes/i);
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      /unable to save your changes/i,
+    );
   });
 
   it("warns when expenses exceed the available budget", () => {

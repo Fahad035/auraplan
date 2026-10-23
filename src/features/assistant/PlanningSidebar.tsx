@@ -46,8 +46,8 @@ export default function PlanningSidebar() {
         </h3>
 
         <p className="mt-2 text-xs leading-6 text-slate-600">
-          AI-generated costs are estimates, not vendor quotes. Review
-          prices for your location and keep your budget flexible.
+          AI-generated costs are estimates, not vendor quotes. Review prices for
+          your location and keep your budget flexible.
         </p>
       </div>
     </aside>

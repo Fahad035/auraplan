@@ -1,14 +1,13 @@
-
 # Security Policy
 
 ## Supported Versions
 
 Security fixes and vulnerability assessments are primarily focused on the latest code available on the `main` branch.
 
-| Version | Security Support |
-| --- | --- |
-| Latest version on `main` | Primary focus |
-| Older versions | Not guaranteed |
+| Version                  | Security Support |
+| ------------------------ | ---------------- |
+| Latest version on `main` | Primary focus    |
+| Older versions           | Not guaranteed   |
 
 ## Reporting a Vulnerability
 
