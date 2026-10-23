@@ -112,7 +112,7 @@ describe("Event creation integration", () => {
 
     expect(generateRecommendations).toHaveBeenCalledWith({
       eventType: "birthday",
-      eventDate: "2026-12-01",
+      eventDate,
       location: "Hyderabad, Telangana",
       guestCount: 50,
       totalBudget: 50000,
