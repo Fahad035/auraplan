@@ -18,10 +18,7 @@ type TimelinePanelProps = {
   onChange: (items: TimelineItem[]) => void;
 };
 
-export default function TimelinePanel({
-  items,
-  onChange,
-}: TimelinePanelProps) {
+export default function TimelinePanel({ items, onChange }: TimelinePanelProps) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
   const [error, setError] = useState("");

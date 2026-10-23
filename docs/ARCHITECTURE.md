@@ -46,13 +46,13 @@ Vitest is used for automated tests. The exact test coverage and passing count sh
 
 ## Typical request sequence
 
-1. The user enters event requirements, a date, and a total budget.
-2. The frontend validates applicable form values and calls the API client.
-3. The client sends a request to `/api/plan`.
-4. The serverless handler validates request fields.
-5. The handler calls Gemini using a server-side credential.
-6. The response is checked and constrained before it is returned.
-7. The frontend presents the resulting planning information.
+1. The user enters the event type, date, location, guest count and total budget. The form validates them with `validateEventInput`.
+2. The API client sends the request to `/api/plan`.
+3. The serverless handler checks the method, content type and size, applies a rate limit, and validates the body with zod.
+4. The handler builds a prompt in which user text appears only as JSON inside tagged data blocks, and calls Gemini with a server-side credential, a timeout and one retry on transient errors.
+5. The model output is validated. The server converts budget weights into amounts that sum exactly to the available budget, flags overdue tasks as urgent, and validates the final response.
+6. The frontend builds the plan (dated timeline, vendor checklist with book-by dates, budget lines, ideas), saves it in browser storage and opens the operations dashboard.
+7. On the dashboard the user edits tasks, expenses and vendors locally, can export or print the plan, and can ask for changes in plain words. A refinement repeats steps 2 to 5 with the current plan sent as tagged data, and the result replaces the generated content while keeping completed tasks and booked vendors.
 
 ## Data and trust boundaries
 
@@ -82,3 +82,5 @@ The application is designed for Vercel deployment. The serverless API requires `
 - [ADR 0004: Budget Constraints and Expense Validation](adr/0004-budget-constraints-and-validation.md)
 - [ADR 0005: API Boundary Validation](adr/0005-api-schema-validation.md)
 - [ADR 0006: Event Planning Workflow and State Management](adr/0006-event-planning-state-management.md)
+- [ADR 0007: Inline the Shared Schema in the Serverless Function](adr/0007-inlined-api-schema.md)
+- [ADR 0008: The Model Decides, Code Calculates](adr/0008-model-judgment-code-arithmetic.md)

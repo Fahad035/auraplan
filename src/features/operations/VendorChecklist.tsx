@@ -6,10 +6,7 @@ import Card from "../../components/ui/Card";
 import ChecklistRow from "../../components/ui/ChecklistRow";
 import { inputClass, labelClass } from "../../components/ui/fieldStyles";
 import ProgressBar from "../../components/ui/ProgressBar";
-import {
-  getVendorProgress,
-  toggleVendorBooking,
-} from "../../domain/checklist";
+import { getVendorProgress, toggleVendorBooking } from "../../domain/checklist";
 import type { Vendor } from "../../domain/schema";
 import { formatShortDate } from "../../lib/format";
 
