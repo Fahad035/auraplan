@@ -49,7 +49,9 @@ export async function generateRecommendations(
   const result = RecommendationSchema.safeParse(data);
 
   if (!result.success) {
-    throw new Error("The server returned invalid event recommendations.");
+    throw new Error(
+      "The server returned invalid event recommendations.",
+    );
   }
 
   return result.data;

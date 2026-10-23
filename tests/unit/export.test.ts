@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  planToJson,
-  planToMarkdown,
-  safeFileName,
-} from "../../src/domain/export";
+import { planToJson, planToMarkdown, safeFileName } from "../../src/domain/export";
 import { samplePlan } from "../fixtures/samplePlan";
 
 describe("export helpers", () => {

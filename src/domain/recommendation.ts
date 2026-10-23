@@ -4,15 +4,6 @@ export const CONTINGENCY_PERCENT = 10;
 
 export const EventTypeSchema = z.enum(["wedding", "birthday", "community"]);
 
-/** Field limits shared by request validation, model output and the UI. */
-export const LIMITS = {
-  maxLocationLength: 150,
-  maxGuests: 100_000,
-  maxBudget: 1_000_000_000,
-  minFeedbackLength: 3,
-  maxFeedbackLength: 300,
-} as const;
-
 export const EventDateSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format.")
@@ -25,67 +16,54 @@ export const EventDateSchema = z
     );
   }, "Invalid calendar date.");
 
-// Building blocks reused by every schema below, so each field limit is
-// declared exactly once.
-const requiredText = (maxLength: number) =>
-  z.string().trim().min(1).max(maxLength);
-
-const listOf = <T extends z.ZodType>(item: T, min: number, max: number) =>
-  z.array(item).min(min).max(max);
-
-const IdeaSchema = requiredText(250);
-const DaysBeforeSchema = z.number().int().min(0).max(365);
-const UrgentSchema = z.boolean().default(false);
-
-const BudgetAmountShape = {
-  name: requiredText(80),
-  amount: z.number().finite().nonnegative(),
-};
-
-const BudgetWeightShape = {
-  name: requiredText(80),
-  weight: z.number().finite().positive().max(1_000_000),
-};
-
-const TimelineTaskShape = {
-  title: requiredText(120),
-  daysBeforeEvent: DaysBeforeSchema,
-};
-
-const VendorRoleShape = {
-  name: requiredText(100),
-  category: requiredText(40),
-};
-
-const VendorAdviceShape = {
-  ...VendorRoleShape,
-  tip: z.string().trim().max(200).default(""),
-  bookByDaysBefore: DaysBeforeSchema.default(30),
-};
-
 /** The current plan, sent back to the model when the user asks for changes. */
-export const PreviousPlanSchema = z.strictObject({
-  ideas: listOf(IdeaSchema, 0, 8),
-  budgetItems: listOf(z.strictObject(BudgetAmountShape), 0, 10),
-  timeline: listOf(z.strictObject(TimelineTaskShape), 0, 12),
-  vendors: listOf(z.strictObject(VendorRoleShape), 0, 10),
-});
+export const PreviousPlanSchema = z
+  .object({
+    ideas: z.array(z.string().trim().min(1).max(250)).max(8),
+    budgetItems: z
+      .array(
+        z
+          .object({
+            name: z.string().trim().min(1).max(80),
+            amount: z.number().finite().nonnegative(),
+          })
+          .strict(),
+      )
+      .max(10),
+    timeline: z
+      .array(
+        z
+          .object({
+            title: z.string().trim().min(1).max(120),
+            daysBeforeEvent: z.number().int().min(0).max(365),
+          })
+          .strict(),
+      )
+      .max(12),
+    vendors: z
+      .array(
+        z
+          .object({
+            name: z.string().trim().min(1).max(100),
+            category: z.string().trim().min(1).max(40),
+          })
+          .strict(),
+      )
+      .max(10),
+  })
+  .strict();
 
 export const PlanRequestSchema = z
-  .strictObject({
+  .object({
     eventType: EventTypeSchema,
     eventDate: EventDateSchema,
-    location: requiredText(LIMITS.maxLocationLength),
-    guestCount: z.number().int().min(1).max(LIMITS.maxGuests),
-    totalBudget: z.number().int().positive().max(LIMITS.maxBudget),
-    feedback: z
-      .string()
-      .trim()
-      .min(LIMITS.minFeedbackLength)
-      .max(LIMITS.maxFeedbackLength)
-      .optional(),
+    location: z.string().trim().min(1).max(150),
+    guestCount: z.number().int().min(1).max(100_000),
+    totalBudget: z.number().int().positive().max(1_000_000_000),
+    feedback: z.string().trim().min(3).max(300).optional(),
     previousPlan: PreviousPlanSchema.optional(),
   })
+  .strict()
   .refine((value) => Boolean(value.feedback) === Boolean(value.previousPlan), {
     message: "feedback and previousPlan must be provided together.",
   });
@@ -94,28 +72,90 @@ export const PlanRequestSchema = z
  * What the model returns. The model supplies judgment (relative budget
  * weights, task offsets, vendor advice); code does the arithmetic.
  */
-export const ModelOutputSchema = z.strictObject({
-  ideas: listOf(IdeaSchema, 3, 8),
-  budgetItems: listOf(z.strictObject(BudgetWeightShape), 3, 10),
-  timeline: listOf(z.strictObject(TimelineTaskShape), 3, 12),
-  vendors: listOf(z.strictObject(VendorAdviceShape), 0, 10).default([]),
-});
+export const ModelOutputSchema = z
+  .object({
+    ideas: z.array(z.string().trim().min(1).max(250)).min(3).max(8),
+    budgetItems: z
+      .array(
+        z
+          .object({
+            name: z.string().trim().min(1).max(80),
+            weight: z.number().finite().positive().max(1_000_000),
+          })
+          .strict(),
+      )
+      .min(3)
+      .max(10),
+    timeline: z
+      .array(
+        z
+          .object({
+            title: z.string().trim().min(1).max(120),
+            daysBeforeEvent: z.number().int().min(0).max(365),
+          })
+          .strict(),
+      )
+      .min(3)
+      .max(12),
+    vendors: z
+      .array(
+        z
+          .object({
+            name: z.string().trim().min(1).max(100),
+            category: z.string().trim().min(1).max(40),
+            tip: z.string().trim().max(200).default(""),
+            bookByDaysBefore: z.number().int().min(0).max(365).default(30),
+          })
+          .strict(),
+      )
+      .max(10)
+      .default([]),
+  })
+  .strict();
 
 /** What the API returns to the browser after server-side enrichment. */
-export const RecommendationSchema = z.strictObject({
-  ideas: listOf(IdeaSchema, 3, 8),
-  budgetItems: listOf(z.strictObject(BudgetAmountShape), 3, 10),
-  timeline: listOf(
-    z.strictObject({ ...TimelineTaskShape, urgent: UrgentSchema }),
-    3,
-    12,
-  ),
-  vendors: listOf(
-    z.strictObject({ ...VendorAdviceShape, urgent: UrgentSchema }),
-    0,
-    10,
-  ).default([]),
-});
+export const RecommendationSchema = z
+  .object({
+    ideas: z.array(z.string().trim().min(1).max(250)).min(3).max(8),
+    budgetItems: z
+      .array(
+        z
+          .object({
+            name: z.string().trim().min(1).max(80),
+            amount: z.number().finite().nonnegative(),
+          })
+          .strict(),
+      )
+      .min(3)
+      .max(10),
+    timeline: z
+      .array(
+        z
+          .object({
+            title: z.string().trim().min(1).max(120),
+            daysBeforeEvent: z.number().int().min(0).max(365),
+            urgent: z.boolean().default(false),
+          })
+          .strict(),
+      )
+      .min(3)
+      .max(12),
+    vendors: z
+      .array(
+        z
+          .object({
+            name: z.string().trim().min(1).max(100),
+            category: z.string().trim().min(1).max(40),
+            tip: z.string().trim().max(200).default(""),
+            bookByDaysBefore: z.number().int().min(0).max(365).default(30),
+            urgent: z.boolean().default(false),
+          })
+          .strict(),
+      )
+      .max(10)
+      .default([]),
+  })
+  .strict();
 
 /**
  * Turns relative weights into whole-number amounts that add up to exactly
@@ -191,9 +231,8 @@ function createRateLimiter(windowMs: number, maxRequests: number) {
   };
 }
 
-// --- public API ---
+// --- exports (the API function inlines everything above this line) ---
 export { allocateBudget, createRateLimiter };
 export type PlanRequest = z.infer<typeof PlanRequestSchema>;
-export type ModelOutput = z.infer<typeof ModelOutputSchema>;
 export type PreviousPlan = z.infer<typeof PreviousPlanSchema>;
 export type Recommendations = z.infer<typeof RecommendationSchema>;

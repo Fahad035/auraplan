@@ -1,52 +1,80 @@
-import { CalendarDays, Clock3, MapPin, Sparkles, Users } from "lucide-react";
 
-import { daysFromToday } from "../../domain/dates";
+import {
+  CalendarDays,
+  Clock3,
+  MapPin,
+  Sparkles,
+  Users,
+} from "lucide-react";
+
 import type { EventPlan } from "../../domain/schema";
-import { formatLongDate } from "../../lib/format";
 
 interface EventDetailsPanelProps {
   plan: EventPlan;
 }
 
-function describeCountdown(days: number | null): string {
-  if (days === null) return "Date unavailable";
-  if (days < 0) return `${Math.abs(days)} days ago`;
-  if (days === 0) return "It's event day!";
+function formatEventDate(value: string) {
+  const date = new Date(`${value}T12:00:00`);
 
-  return `${days} days to go`;
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleDateString("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 }
 
-export default function EventDetailsPanel({ plan }: EventDetailsPanelProps) {
-  const detailTiles = [
-    {
-      label: "Event date",
-      value: formatLongDate(plan.eventDate),
-      icon: CalendarDays,
-      iconStyle: "bg-violet-100 text-violet-700",
-      wrapsLongText: true,
-    },
-    {
-      label: "Location",
-      value: plan.location,
-      icon: MapPin,
-      iconStyle: "bg-indigo-100 text-indigo-700",
-      wrapsLongText: true,
-    },
-    {
-      label: "Expected guests",
-      value: plan.guestCount.toLocaleString("en-IN"),
-      icon: Users,
-      iconStyle: "bg-blue-100 text-blue-700",
-      wrapsLongText: false,
-    },
-    {
-      label: "Event countdown",
-      value: describeCountdown(daysFromToday(plan.eventDate)),
-      icon: Clock3,
-      iconStyle: "bg-emerald-100 text-emerald-700",
-      wrapsLongText: false,
-    },
-  ];
+function getDaysUntilEvent(value: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+
+  if (!match) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+
+  const parsedDate = new Date(Date.UTC(year, month - 1, day));
+
+  if (
+    parsedDate.getUTCFullYear() !== year ||
+    parsedDate.getUTCMonth() !== month - 1 ||
+    parsedDate.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  const eventDate = Date.UTC(year, month - 1, day);
+  const today = new Date();
+  const todayDate = Date.UTC(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  );
+
+  return Math.round(
+    (eventDate - todayDate) / (1000 * 60 * 60 * 24),
+  );
+}
+
+export default function EventDetailsPanel({
+  plan,
+}: EventDetailsPanelProps) {
+  const daysUntilEvent = getDaysUntilEvent(plan.eventDate);
+
+  const countdown =
+    daysUntilEvent === null
+      ? "Date unavailable"
+      : daysUntilEvent < 0
+        ? `${Math.abs(daysUntilEvent)} days ago`
+        : daysUntilEvent === 0
+          ? "It's event day!"
+          : `${daysUntilEvent} days to go`;
 
   return (
     <section
@@ -70,40 +98,67 @@ export default function EventDetailsPanel({ plan }: EventDetailsPanelProps) {
           </h2>
 
           <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-            Keep your event details, budget, tasks, and bookings updated as your
-            plans come together.
+            Keep your event details, budget, tasks, and bookings updated as
+            your plans come together.
           </p>
         </div>
 
         <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:min-w-97.5">
-          {detailTiles.map((tile) => {
-            const Icon = tile.icon;
+          <div className="flex min-w-0 items-start gap-3 rounded-2xl border border-white bg-white/90 p-4 shadow-sm">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+              <CalendarDays size={19} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-slate-500">
+                Event date
+              </p>
+              <p className="mt-1 wrap-break-word text-sm font-semibold text-slate-900">
+                {formatEventDate(plan.eventDate)}
+              </p>
+            </div>
+          </div>
 
-            return (
-              <div
-                key={tile.label}
-                className="flex min-w-0 items-start gap-3 rounded-2xl border border-white bg-white/90 p-4 shadow-sm"
-              >
-                <div
-                  className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${tile.iconStyle}`}
-                >
-                  <Icon size={19} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-slate-500">
-                    {tile.label}
-                  </p>
-                  <p
-                    className={`mt-1 text-sm font-semibold text-slate-900${
-                      tile.wrapsLongText ? " wrap-break-word" : ""
-                    }`}
-                  >
-                    {tile.value}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
+          <div className="flex min-w-0 items-start gap-3 rounded-2xl border border-white bg-white/90 p-4 shadow-sm">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">
+              <MapPin size={19} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-slate-500">
+                Location
+              </p>
+              <p className="mt-1 wrap-break-word text-sm font-semibold text-slate-900">
+                {plan.location}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex min-w-0 items-start gap-3 rounded-2xl border border-white bg-white/90 p-4 shadow-sm">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+              <Users size={19} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-slate-500">
+                Expected guests
+              </p>
+              <p className="mt-1 text-sm font-semibold text-slate-900">
+                {plan.guestCount.toLocaleString("en-IN")}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex min-w-0 items-start gap-3 rounded-2xl border border-white bg-white/90 p-4 shadow-sm">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+              <Clock3 size={19} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-slate-500">
+                Event countdown
+              </p>
+              <p className="mt-1 text-sm font-semibold text-slate-900">
+                {countdown}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </section>

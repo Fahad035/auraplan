@@ -25,10 +25,6 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["./tests/setup.ts"],
-    // jsdom + axe-core and user-event flows are slow when many files run in
-    // parallel; the default 5 s limit causes spurious timeouts.
-    testTimeout: 30_000,
-    hookTimeout: 30_000,
     include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
     coverage: {
       provider: "v8",

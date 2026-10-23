@@ -14,7 +14,7 @@ export default function IdeasPanel({ ideas }: IdeasPanelProps) {
         description="AI-generated suggestions tailored to your event type, location and guest count."
       >
         {ideas.length === 0 ? (
-          <p className="text-sm text-slate-600 dark:text-slate-300">
+          <p className="text-sm text-slate-600">
             No ideas were saved for this event.
           </p>
         ) : (
@@ -22,14 +22,12 @@ export default function IdeasPanel({ ideas }: IdeasPanelProps) {
             {ideas.map((idea) => (
               <li
                 key={idea}
-                className="flex items-start gap-3 rounded-xl border border-slate-100 dark:border-slate-700 p-3"
+                className="flex items-start gap-3 rounded-xl border border-slate-100 p-3"
               >
                 <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
                   <Lightbulb size={15} aria-hidden="true" />
                 </span>
-                <span className="text-sm leading-6 text-slate-700 dark:text-slate-300">
-                  {idea}
-                </span>
+                <span className="text-sm leading-6 text-slate-700">{idea}</span>
               </li>
             ))}
           </ul>

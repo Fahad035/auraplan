@@ -1,4 +1,3 @@
-import { randomId } from "./ids";
 import type { EventType, Vendor } from "./schema";
 
 export function toggleVendorBooking(
@@ -6,15 +5,15 @@ export function toggleVendorBooking(
   vendorId: string,
 ): Vendor[] {
   return vendors.map((vendor) =>
-    vendor.id === vendorId ? { ...vendor, booked: !vendor.booked } : vendor,
+    vendor.id === vendorId
+      ? { ...vendor, booked: !vendor.booked }
+      : vendor,
   );
 }
 
-export function getVendorProgress(vendors: Vendor[]): {
-  booked: number;
-  total: number;
-  percentage: number;
-} {
+export function getVendorProgress(
+  vendors: Vendor[],
+): { booked: number; total: number; percentage: number } {
   const booked = vendors.filter((vendor) => vendor.booked).length;
   const total = vendors.length;
 
@@ -60,10 +59,9 @@ const VENDOR_TEMPLATES: Record<
 export function buildVendorChecklist(
   eventType: EventType,
   suggestions: ReadonlyArray<{ name: string; category: string }> = [],
-  createId: () => string = randomId,
+  createId: () => string = () => crypto.randomUUID(),
 ): Vendor[] {
-  const source =
-    suggestions.length > 0 ? suggestions : VENDOR_TEMPLATES[eventType];
+  const source = suggestions.length > 0 ? suggestions : VENDOR_TEMPLATES[eventType];
 
   return source.map((item) => ({
     id: createId(),

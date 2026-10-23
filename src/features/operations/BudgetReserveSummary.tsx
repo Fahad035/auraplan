@@ -1,12 +1,18 @@
+
 import { PiggyBank, Wallet } from "lucide-react";
 
 import type { BudgetSummary } from "../../domain/budget";
-import { formatCurrency } from "../../lib/format";
 
 interface BudgetReserveSummaryProps {
   budget: BudgetSummary;
   contingencyPercent: number;
 }
+
+const currency = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  maximumFractionDigits: 0,
+});
 
 export default function BudgetReserveSummary({
   budget,
@@ -17,43 +23,43 @@ export default function BudgetReserveSummary({
       aria-label="Budget reserve summary"
       className="mt-6 grid gap-4 sm:grid-cols-2"
     >
-      <div className="flex min-w-0 items-start gap-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-sm">
+      <div className="flex min-w-0 items-start gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
           <PiggyBank size={20} />
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+          <p className="text-sm font-semibold text-slate-800">
             Protected contingency reserve
           </p>
-          <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-300">
+          <p className="mt-1 text-xs leading-5 text-slate-500">
             Funds set aside for unexpected event expenses.
           </p>
-          <p className="mt-3 wrap-break-word text-lg font-bold text-slate-900 dark:text-slate-100">
-            {formatCurrency(budget.contingency)}
+          <p className="mt-3 wrap-break-word text-lg font-bold text-slate-900">
+            {currency.format(budget.contingency)}
           </p>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">
+          <p className="mt-1 text-xs text-slate-500">
             {contingencyPercent}% of your total budget
           </p>
         </div>
       </div>
 
-      <div className="flex min-w-0 items-start gap-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-sm">
+      <div className="flex min-w-0 items-start gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
           <Wallet size={20} />
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+          <p className="text-sm font-semibold text-slate-800">
             Available for planning
           </p>
-          <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-300">
+          <p className="mt-1 text-xs leading-5 text-slate-500">
             Your spending limit after reserving contingency funds.
           </p>
-          <p className="mt-3 wrap-break-word text-lg font-bold text-slate-900 dark:text-slate-100">
-            {formatCurrency(budget.availableForPlanning)}
+          <p className="mt-3 wrap-break-word text-lg font-bold text-slate-900">
+            {currency.format(budget.availableForPlanning)}
           </p>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">
+          <p className="mt-1 text-xs text-slate-500">
             Before subtracting planned expenses
           </p>
         </div>

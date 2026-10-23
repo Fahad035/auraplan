@@ -1,11 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Plus, Trash2, Wallet } from "lucide-react";
-
-import { inputClass as baseInputClass } from "../../components/ui/fieldStyles";
-import ProgressBar from "../../components/ui/ProgressBar";
-import { budgetUsedPercent, calculateBudget } from "../../domain/budget";
+import { calculateBudget } from "../../domain/budget";
 import type { BudgetItem } from "../../domain/schema";
-import { formatCurrency } from "../../lib/format";
 
 interface BudgetPanelProps {
   totalBudget: number;
@@ -14,9 +10,14 @@ interface BudgetPanelProps {
   onChange: (items: BudgetItem[]) => void;
 }
 
-const MAX_CATEGORY_NAME_LENGTH = 100;
+const currency = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  maximumFractionDigits: 0,
+});
 
-const inputClass = `${baseInputClass} min-w-0`;
+const inputClass =
+  "w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100";
 
 export default function BudgetPanel({
   totalBudget,
@@ -28,7 +29,11 @@ export default function BudgetPanel({
   const [amount, setAmount] = useState("");
   const [error, setError] = useState("");
 
-  const budget = calculateBudget(totalBudget, contingencyPercent, items);
+  const budget = calculateBudget(
+    totalBudget,
+    contingencyPercent,
+    items,
+  );
 
   function addItem(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -67,7 +72,9 @@ export default function BudgetPanel({
   function updateAmount(id: string, value: string) {
     if (value.trim() === "") {
       onChange(
-        items.map((item) => (item.id === id ? { ...item, amount: 0 } : item)),
+        items.map((item) =>
+          item.id === id ? { ...item, amount: 0 } : item,
+        ),
       );
       return;
     }
@@ -85,7 +92,9 @@ export default function BudgetPanel({
 
   function updateName(id: string, value: string) {
     onChange(
-      items.map((item) => (item.id === id ? { ...item, name: value } : item)),
+      items.map((item) =>
+        item.id === id ? { ...item, name: value } : item,
+      ),
     );
   }
 
@@ -93,92 +102,111 @@ export default function BudgetPanel({
     onChange(items.filter((item) => item.id !== id));
   }
 
-  const allocationPercent = budgetUsedPercent(budget);
-
-  const summaryTiles = [
-    { label: "Total budget", value: budget.totalBudget },
-    { label: `Reserve (${contingencyPercent}%)`, value: budget.contingency },
-    { label: "Planned expenses", value: budget.allocated },
-  ];
+  const allocationPercent =
+    budget.availableForPlanning <= 0
+      ? budget.allocated > 0
+        ? 100
+        : 0
+      : Math.min(
+          100,
+          (budget.allocated / budget.availableForPlanning) * 100,
+        );
 
   return (
-    <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm sm:p-6">
+    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
           <Wallet size={20} />
         </div>
         <div>
-          <h2 className="font-semibold text-slate-900 dark:text-slate-100">
+          <h2 className="font-semibold text-slate-900">
             Budget planner
           </h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
+          <p className="mt-1 text-sm text-slate-500">
             Add expenses and adjust amounts to keep your event on budget.
           </p>
         </div>
       </div>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-3">
-        {summaryTiles.map((tile) => (
-          <div
-            key={tile.label}
-            className="rounded-xl bg-slate-50 dark:bg-slate-950 p-4"
-          >
-            <p className="text-xs text-slate-500 dark:text-slate-300">
-              {tile.label}
-            </p>
-            <p className="mt-2 font-semibold text-slate-900 dark:text-slate-100">
-              {formatCurrency(tile.value)}
-            </p>
-          </div>
-        ))}
+        <div className="rounded-xl bg-slate-50 p-4">
+          <p className="text-xs text-slate-500">Total budget</p>
+          <p className="mt-2 font-semibold text-slate-900">
+            {currency.format(budget.totalBudget)}
+          </p>
+        </div>
+
+        <div className="rounded-xl bg-slate-50 p-4">
+          <p className="text-xs text-slate-500">
+            Reserve ({contingencyPercent}%)
+          </p>
+          <p className="mt-2 font-semibold text-slate-900">
+            {currency.format(budget.contingency)}
+          </p>
+        </div>
+
+        <div className="rounded-xl bg-slate-50 p-4">
+          <p className="text-xs text-slate-500">Planned expenses</p>
+          <p className="mt-2 font-semibold text-slate-900">
+            {currency.format(budget.allocated)}
+          </p>
+        </div>
       </div>
 
       <div className="mt-5">
         <div className="mb-2 flex flex-wrap justify-between gap-2 text-sm">
-          <span className="text-slate-500 dark:text-slate-300">
+          <span className="text-slate-500">
             Available after reserve
           </span>
           <span
             className={`font-semibold ${
-              budget.isOverBudget
-                ? "text-red-600 dark:text-red-300"
-                : "text-emerald-700 dark:text-emerald-300"
+              budget.isOverBudget ? "text-red-600 dark:text-red-300" : "text-emerald-700 dark:text-emerald-300"
             }`}
           >
-            {formatCurrency(budget.remaining)}
+            {currency.format(budget.remaining)}
           </span>
         </div>
 
-        <ProgressBar
-          label="Budget allocation"
-          percentage={allocationPercent}
-          barClassName={budget.isOverBudget ? "bg-red-500" : "bg-violet-600"}
-        />
+        <div
+          className="h-2 overflow-hidden rounded-full bg-slate-100"
+          role="progressbar"
+          aria-label="Budget allocation"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(allocationPercent)}
+        >
+          <div
+            className={`h-full rounded-full transition-all ${
+              budget.isOverBudget ? "bg-red-500" : "bg-violet-600"
+            }`}
+            style={{ width: `${allocationPercent}%` }}
+          />
+        </div>
 
         {budget.isOverBudget && (
           <p role="alert" className="mt-2 text-sm text-red-600">
             Your expenses exceed the available budget by{" "}
-            {formatCurrency(-budget.remaining)}.
+            {currency.format(-budget.remaining)}.
           </p>
         )}
       </div>
 
-      <div className="mt-7 border-t border-slate-100 dark:border-slate-700 pt-5">
-        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+      <div className="mt-7 border-t border-slate-100 pt-5">
+        <h3 className="text-sm font-semibold text-slate-800">
           Expense categories
         </h3>
 
         {items.length === 0 ? (
-          <p className="mt-3 rounded-xl bg-slate-50 dark:bg-slate-950 p-4 text-sm text-slate-500 dark:text-slate-300">
+          <p className="mt-3 rounded-xl bg-slate-50 p-4 text-sm text-slate-500">
             No expenses yet. Add your first category below.
           </p>
         ) : (
           <div className="mt-3 space-y-3">
             <div className="hidden grid-cols-[minmax(0,1fr)_150px_40px] gap-2 px-1 sm:grid">
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-300">
+              <span className="text-xs font-medium text-slate-500">
                 Category name
               </span>
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-300">
+              <span className="text-xs font-medium text-slate-500">
                 Amount (₹)
               </span>
               <span aria-hidden="true" />
@@ -187,15 +215,15 @@ export default function BudgetPanel({
             {items.map((item) => (
               <div
                 key={item.id}
-                className="grid grid-cols-1 items-end gap-3 rounded-xl border border-slate-100 dark:border-slate-700 p-3 sm:grid-cols-[minmax(0,1fr)_150px_40px] sm:items-center sm:gap-2 sm:border-0 sm:p-0"
+                className="grid grid-cols-1 items-end gap-3 rounded-xl border border-slate-100 p-3 sm:grid-cols-[minmax(0,1fr)_150px_40px] sm:items-center sm:gap-2 sm:border-0 sm:p-0"
               >
                 <label className="block min-w-0">
-                  <span className="mb-1.5 block text-xs font-medium text-slate-600 dark:text-slate-300 sm:hidden">
+                  <span className="mb-1.5 block text-xs font-medium text-slate-600 sm:hidden">
                     Category name
                   </span>
                   <input
                     aria-label={`Name for ${item.name}`}
-                    maxLength={MAX_CATEGORY_NAME_LENGTH}
+                    maxLength={100}
                     value={item.name}
                     onChange={(event) =>
                       updateName(item.id, event.target.value)
@@ -205,7 +233,7 @@ export default function BudgetPanel({
                 </label>
 
                 <label className="block min-w-0">
-                  <span className="mb-1.5 block text-xs font-medium text-slate-600 dark:text-slate-300 sm:hidden">
+                  <span className="mb-1.5 block text-xs font-medium text-slate-600 sm:hidden">
                     Amount (₹)
                   </span>
                   <input
@@ -237,23 +265,23 @@ export default function BudgetPanel({
 
       <form
         onSubmit={addItem}
-        className="mt-5 grid gap-3 border-t border-slate-100 dark:border-slate-700 pt-5 sm:grid-cols-[minmax(0,1fr)_150px_auto]"
+        className="mt-5 grid gap-3 border-t border-slate-100 pt-5 sm:grid-cols-[minmax(0,1fr)_150px_auto]"
       >
         <label className="block min-w-0">
-          <span className="mb-1.5 block text-xs font-medium text-slate-600 dark:text-slate-300">
+          <span className="mb-1.5 block text-xs font-medium text-slate-600">
             Category name
           </span>
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
             placeholder="e.g. Photography"
-            maxLength={MAX_CATEGORY_NAME_LENGTH}
+            maxLength={100}
             className={inputClass}
           />
         </label>
 
         <label className="block min-w-0">
-          <span className="mb-1.5 block text-xs font-medium text-slate-600 dark:text-slate-300">
+          <span className="mb-1.5 block text-xs font-medium text-slate-600">
             Amount (₹)
           </span>
           <input

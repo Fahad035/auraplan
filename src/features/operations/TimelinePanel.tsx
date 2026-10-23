@@ -1,24 +1,26 @@
 import { useState, type FormEvent } from "react";
-import { CalendarDays, Plus } from "lucide-react";
+import {
+  CalendarDays,
+  CheckCircle2,
+  Circle,
+  Plus,
+  Trash2,
+} from "lucide-react";
 
-import Button from "../../components/ui/Button";
-import Card from "../../components/ui/Card";
-import ChecklistRow from "../../components/ui/ChecklistRow";
-import { inputClass, labelClass } from "../../components/ui/fieldStyles";
-import ProgressBar from "../../components/ui/ProgressBar";
-import { todayLocalDate } from "../../domain/dates";
 import type { TimelineItem } from "../../domain/schema";
 import { getTimelineProgress, sortTimeline } from "../../domain/timeline";
-import { formatShortDate } from "../../lib/format";
-
-const MAX_TASK_TITLE_LENGTH = 120;
+import Card from "../../components/ui/Card";
+import Button from "../../components/ui/Button";
 
 type TimelinePanelProps = {
   items: TimelineItem[];
   onChange: (items: TimelineItem[]) => void;
 };
 
-export default function TimelinePanel({ items, onChange }: TimelinePanelProps) {
+export default function TimelinePanel({
+  items,
+  onChange,
+}: TimelinePanelProps) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
   const [error, setError] = useState("");
@@ -26,7 +28,12 @@ export default function TimelinePanel({ items, onChange }: TimelinePanelProps) {
   const sortedItems = sortTimeline(items);
   const progress = getTimelineProgress(items);
 
-  const minimumDate = todayLocalDate();
+  const today = new Date();
+  const minimumDate = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, "0"),
+    String(today.getDate()).padStart(2, "0"),
+  ].join("-");
 
   function addTask(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -39,10 +46,8 @@ export default function TimelinePanel({ items, onChange }: TimelinePanelProps) {
       return;
     }
 
-    if (trimmedTitle.length > MAX_TASK_TITLE_LENGTH) {
-      setError(
-        `Task names must be ${MAX_TASK_TITLE_LENGTH} characters or fewer.`,
-      );
+    if (trimmedTitle.length > 120) {
+      setError("Task names must be 120 characters or fewer.");
       return;
     }
 
@@ -82,7 +87,10 @@ export default function TimelinePanel({ items, onChange }: TimelinePanelProps) {
     >
       <form onSubmit={addTask} className="mb-6 space-y-3">
         <div>
-          <label htmlFor="timeline-task-title" className={labelClass}>
+          <label
+            htmlFor="timeline-task-title"
+            className="text-sm font-medium text-slate-700"
+          >
             Task name
           </label>
           <input
@@ -90,13 +98,16 @@ export default function TimelinePanel({ items, onChange }: TimelinePanelProps) {
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             placeholder="e.g. Book the event venue"
-            maxLength={MAX_TASK_TITLE_LENGTH}
-            className={`mt-2 ${inputClass}`}
+            maxLength={120}
+            className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
           />
         </div>
 
         <div>
-          <label htmlFor="timeline-task-date" className={labelClass}>
+          <label
+            htmlFor="timeline-task-date"
+            className="text-sm font-medium text-slate-700"
+          >
             Task date
           </label>
           <input
@@ -105,7 +116,7 @@ export default function TimelinePanel({ items, onChange }: TimelinePanelProps) {
             min={minimumDate}
             value={date}
             onChange={(event) => setDate(event.target.value)}
-            className={`mt-2 ${inputClass}`}
+            className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
           />
         </div>
 
@@ -121,50 +132,85 @@ export default function TimelinePanel({ items, onChange }: TimelinePanelProps) {
         </Button>
       </form>
 
-      <ProgressBar
-        label="Timeline completion"
-        percentage={progress.percentage}
-        className="mb-5"
-      />
+      <div
+        className="mb-5 h-2 overflow-hidden rounded-full bg-slate-100"
+        role="progressbar"
+        aria-label="Timeline completion"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={progress.percentage}
+      >
+        <div
+          className="h-full rounded-full bg-violet-600 transition-all"
+          style={{ width: `${progress.percentage}%` }}
+        />
+      </div>
 
       {sortedItems.length === 0 ? (
-        <p className="py-4 text-sm text-slate-500 dark:text-slate-300">
+        <p className="py-4 text-sm text-slate-500">
           No tasks yet. Add your first planning milestone above.
         </p>
       ) : (
         <div className="space-y-3">
           {sortedItems.map((item) => (
-            <ChecklistRow
+            <div
               key={item.id}
-              checked={item.completed}
-              toggleLabel={
-                item.completed
-                  ? `Mark ${item.title} incomplete`
-                  : `Mark ${item.title} complete`
-              }
-              onToggle={() => toggleTask(item.id)}
-              deleteLabel={`Delete ${item.title}`}
-              onDelete={() => deleteTask(item.id)}
+              className="flex items-start gap-3 rounded-xl border border-slate-100 p-3"
             >
-              <p
-                className={`wrap-break-word text-sm font-medium ${
+              <button
+                type="button"
+                onClick={() => toggleTask(item.id)}
+                aria-label={
                   item.completed
-                    ? "text-slate-400 line-through"
-                    : "text-slate-800 dark:text-slate-100"
-                }`}
+                    ? `Mark ${item.title} incomplete`
+                    : `Mark ${item.title} complete`
+                }
+                className="mt-0.5 shrink-0 text-violet-600"
               >
-                {item.title}
-                {item.urgent && !item.completed && (
-                  <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800">
-                    Do now
-                  </span>
+                {item.completed ? (
+                  <CheckCircle2 size={20} />
+                ) : (
+                  <Circle size={20} />
                 )}
-              </p>
-              <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-300">
-                <CalendarDays size={13} />
-                {formatShortDate(item.date)}
-              </p>
-            </ChecklistRow>
+              </button>
+
+              <div className="min-w-0 flex-1">
+                <p
+                  className={`wrap-break-word text-sm font-medium ${
+                    item.completed
+                      ? "text-slate-400 line-through"
+                      : "text-slate-800"
+                  }`}
+                >
+                  {item.title}
+                  {item.urgent && !item.completed && (
+                    <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                      Do now
+                    </span>
+                  )}
+                </p>
+                <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
+                  <CalendarDays size={13} />
+                  {new Date(`${item.date}T00:00:00`).toLocaleDateString(
+                    "en-IN",
+                    {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    },
+                  )}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => deleteTask(item.id)}
+                aria-label={`Delete ${item.title}`}
+                className="shrink-0 rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
           ))}
         </div>
       )}
