@@ -1,3 +1,4 @@
+import { randomId } from "./ids";
 import type { EventType, Vendor } from "./schema";
 
 export function toggleVendorBooking(
@@ -59,9 +60,10 @@ const VENDOR_TEMPLATES: Record<
 export function buildVendorChecklist(
   eventType: EventType,
   suggestions: ReadonlyArray<{ name: string; category: string }> = [],
-  createId: () => string = () => crypto.randomUUID(),
+  createId: () => string = randomId,
 ): Vendor[] {
-  const source = suggestions.length > 0 ? suggestions : VENDOR_TEMPLATES[eventType];
+  const source =
+    suggestions.length > 0 ? suggestions : VENDOR_TEMPLATES[eventType];
 
   return source.map((item) => ({
     id: createId(),

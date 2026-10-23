@@ -1,16 +1,34 @@
 import { buildVendorChecklist } from "./checklist";
-import type { PreviousPlan, Recommendations } from "./recommendation";
-import type { EventPlan, EventType, TimelineItem, Vendor } from "./schema";
+import { formatLocalDate } from "./dates";
+import type { EventInput } from "./eventInput";
+import { randomId } from "./ids";
+import {
+  CONTINGENCY_PERCENT,
+  type PreviousPlan,
+  type Recommendations,
+} from "./recommendation";
+import {
+  EventPlanSchema,
+  type EventPlan,
+  type EventType,
+  type TimelineItem,
+  type Vendor,
+} from "./schema";
 
 const DAY_MS = 86_400_000;
 
-function formatLocalDate(date: Date): string {
-  return [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0"),
-  ].join("-");
-}
+/** How much of a plan is sent back to the model when refining. */
+const PREVIOUS_PLAN_LIMITS = {
+  ideas: 8,
+  ideaLength: 250,
+  budgetItems: 10,
+  budgetNameLength: 80,
+  timeline: 12,
+  taskTitleLength: 120,
+  vendors: 10,
+  vendorNameLength: 100,
+  vendorCategoryLength: 40,
+} as const;
 
 /** The calendar date that falls `days` before `eventDate` (YYYY-MM-DD). */
 export function dateBefore(eventDate: string, days: number): string {
@@ -34,7 +52,7 @@ export function daysUntil(eventDate: string, date: string): number {
 export function buildTimeline(
   eventDate: string,
   items: Recommendations["timeline"],
-  createId: () => string = () => crypto.randomUUID(),
+  createId: () => string = randomId,
 ): TimelineItem[] {
   return items.map((item) => ({
     id: createId(),
@@ -49,7 +67,7 @@ export function buildVendors(
   eventType: EventType,
   eventDate: string,
   suggestions: Recommendations["vendors"] = [],
-  createId: () => string = () => crypto.randomUUID(),
+  createId: () => string = randomId,
 ): Vendor[] {
   const vendors = buildVendorChecklist(eventType, suggestions, createId);
 
@@ -70,19 +88,23 @@ const clip = (value: string, max: number) => value.trim().slice(0, max);
 
 /** Compact view of a plan sent back to the model when refining. */
 export function toPreviousPlan(plan: EventPlan): PreviousPlan {
+  const limits = PREVIOUS_PLAN_LIMITS;
+
   return {
-    ideas: plan.ideas.slice(0, 8).map((idea) => clip(idea, 250)),
-    budgetItems: plan.budgetItems.slice(0, 10).map((item) => ({
-      name: clip(item.name, 80),
+    ideas: plan.ideas
+      .slice(0, limits.ideas)
+      .map((idea) => clip(idea, limits.ideaLength)),
+    budgetItems: plan.budgetItems.slice(0, limits.budgetItems).map((item) => ({
+      name: clip(item.name, limits.budgetNameLength),
       amount: item.amount,
     })),
-    timeline: plan.timeline.slice(0, 12).map((item) => ({
-      title: clip(item.title, 120),
+    timeline: plan.timeline.slice(0, limits.timeline).map((item) => ({
+      title: clip(item.title, limits.taskTitleLength),
       daysBeforeEvent: daysUntil(plan.eventDate, item.date),
     })),
-    vendors: plan.vendors.slice(0, 10).map((vendor) => ({
-      name: clip(vendor.name, 100),
-      category: clip(vendor.category, 40),
+    vendors: plan.vendors.slice(0, limits.vendors).map((vendor) => ({
+      name: clip(vendor.name, limits.vendorNameLength),
+      category: clip(vendor.category, limits.vendorCategoryLength),
     })),
   };
 }
@@ -96,7 +118,7 @@ const norm = (value: string) => value.trim().toLowerCase();
 export function applyRecommendations(
   plan: EventPlan,
   recommendations: Recommendations,
-  createId: () => string = () => crypto.randomUUID(),
+  createId: () => string = randomId,
 ): EventPlan {
   const completedTitles = new Set(
     plan.timeline.filter((item) => item.completed).map((i) => norm(i.title)),
@@ -141,4 +163,49 @@ export function applyRecommendations(
     timeline,
     vendors,
   };
+}
+
+/** Default plan title, e.g. "Birthday Celebration". */
+function defaultPlanTitle(eventType: EventType): string {
+  return `${eventType.charAt(0).toUpperCase()}${eventType.slice(1)} Celebration`;
+}
+
+/**
+ * Builds a complete, validated plan from the user's event details and the
+ * generated recommendations. Throws if the result does not match the schema.
+ */
+export function buildEventPlan(
+  input: EventInput,
+  recommendations: Recommendations,
+  createId: () => string = randomId,
+): EventPlan {
+  const { eventType, eventDate } = input;
+
+  const result = EventPlanSchema.safeParse({
+    id: createId(),
+    title: defaultPlanTitle(eventType),
+    ...input,
+    contingencyPercent: CONTINGENCY_PERCENT,
+    budgetItems: recommendations.budgetItems.map((item) => ({
+      id: createId(),
+      name: item.name,
+      amount: item.amount,
+    })),
+    timeline: buildTimeline(eventDate, recommendations.timeline, createId),
+    vendors: buildVendors(
+      eventType,
+      eventDate,
+      recommendations.vendors,
+      createId,
+    ),
+    ideas: recommendations.ideas,
+  });
+
+  if (!result.success) {
+    throw new Error(
+      result.error.issues[0]?.message ?? "The generated event plan is invalid.",
+    );
+  }
+
+  return result.data;
 }

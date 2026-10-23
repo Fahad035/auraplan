@@ -3,10 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { CalendarDays, MapPin, Users, Wallet, Sparkles } from "lucide-react";
 
 import Button from "../../components/ui/Button";
-import { EventPlanSchema, type EventType } from "../../domain/schema";
-import { buildTimeline, buildVendors } from "../../domain/planBuilder";
+import { labelClass, roomyInputClass } from "../../components/ui/fieldStyles";
+import { todayLocalDate } from "../../domain/dates";
+import { validateEventInput } from "../../domain/eventInput";
+import { buildEventPlan } from "../../domain/planBuilder";
+import { LIMITS } from "../../domain/recommendation";
+import type { EventType } from "../../domain/schema";
 import { generateRecommendations } from "../../lib/api";
 import { loadEventPlans, saveEventPlans } from "../../lib/storage";
+
+const inputClass = `mt-2 ${roomyInputClass}`;
 
 export default function EventCreationForm() {
   const navigate = useNavigate();
@@ -25,94 +31,31 @@ export default function EventCreationForm() {
     if (error) errorRef.current?.focus();
   }, [error]);
 
-  const today = new Date();
-
-  const minimumDate = [
-    today.getFullYear(),
-    String(today.getMonth() + 1).padStart(2, "0"),
-    String(today.getDate()).padStart(2, "0"),
-  ].join("-");
+  const minimumDate = todayLocalDate();
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
 
-    const guests = Number(guestCount);
-    const budget = Number(totalBudget);
-    const trimmedLocation = location.trim();
+    const validation = validateEventInput(
+      { eventType, eventDate, location, guestCount, totalBudget },
+      minimumDate,
+    );
 
-    if (!Number.isInteger(guests) || guests < 1 || guests > 100000) {
-      setError("Enter a valid guest count between 1 and 100,000.");
-      return;
-    }
-
-    if (
-      !Number.isSafeInteger(budget) ||
-      budget <= 0 ||
-      budget > 1_000_000_000
-    ) {
-      setError(
-        "Enter a whole-number budget greater than zero and no more than 1 billion.",
-      );
-      return;
-    }
-
-    if (!eventDate || eventDate < minimumDate) {
-      setError("Choose today or a future date for your event.");
-      return;
-    }
-
-    if (!trimmedLocation || trimmedLocation.length > 150) {
-      setError("Enter a valid event location.");
+    if (!validation.ok) {
+      setError(validation.error);
       return;
     }
 
     setIsSaving(true);
 
     try {
-      const recommendations = await generateRecommendations({
-        eventType,
-        eventDate,
-        location: trimmedLocation,
-        guestCount: guests,
-        totalBudget: budget,
-      });
+      const recommendations = await generateRecommendations(validation.value);
+      const plan = buildEventPlan(validation.value, recommendations);
 
-      const timeline = buildTimeline(eventDate, recommendations.timeline);
+      saveEventPlans([...loadEventPlans(), plan]);
 
-      const planResult = EventPlanSchema.safeParse({
-        id: crypto.randomUUID(),
-        title: `${eventType.charAt(0).toUpperCase()}${eventType.slice(1)} Celebration`,
-        eventType,
-        eventDate,
-        location: trimmedLocation,
-        guestCount: guests,
-        totalBudget: budget,
-        contingencyPercent: 10,
-        budgetItems: recommendations.budgetItems.map((item) => ({
-          id: crypto.randomUUID(),
-          name: item.name,
-          amount: item.amount,
-        })),
-        timeline,
-        vendors: buildVendors(eventType, eventDate, recommendations.vendors),
-        ideas: recommendations.ideas,
-      });
-
-      if (!planResult.success) {
-        throw new Error(
-          planResult.error.issues[0]?.message ??
-            "The generated event plan is invalid.",
-        );
-      }
-
-      const existingPlans = loadEventPlans();
-
-      saveEventPlans([...existingPlans, planResult.data]);
-
-      navigate("/operations", {
-        state: { eventId: planResult.data.id },
-      });
+      navigate("/operations", { state: { eventId: plan.id } });
     } catch (caughtError) {
       setError(
         caughtError instanceof Error
@@ -123,11 +66,6 @@ export default function EventCreationForm() {
       setIsSaving(false);
     }
   }
-
-  const inputClass =
-    "mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-100";
-
-  const labelClass = "text-sm font-medium text-slate-700";
 
   return (
     <form
@@ -201,7 +139,7 @@ export default function EventCreationForm() {
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="e.g. Hyderabad, Telangana"
-            maxLength={150}
+            maxLength={LIMITS.maxLocationLength}
             className={inputClass}
             required
           />
@@ -219,7 +157,7 @@ export default function EventCreationForm() {
               name="guestCount"
               type="number"
               min="1"
-              max="100000"
+              max={LIMITS.maxGuests}
               step="1"
               value={guestCount}
               onChange={(e) => setGuestCount(e.target.value)}
@@ -239,7 +177,7 @@ export default function EventCreationForm() {
               name="totalBudget"
               type="number"
               min="1"
-              max="1000000000"
+              max={LIMITS.maxBudget}
               step="1"
               value={totalBudget}
               onChange={(e) => setTotalBudget(e.target.value)}

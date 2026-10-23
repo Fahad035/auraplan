@@ -1,4 +1,3 @@
-
 import {
   CheckCircle2,
   IndianRupee,
@@ -6,39 +5,38 @@ import {
   Wallet,
 } from "lucide-react";
 
-import type { BudgetSummary } from "../../domain/budget";
-type TimelineProgress = ReturnType<typeof getTimelineProgress>;
+import { budgetUsedPercent, type BudgetSummary } from "../../domain/budget";
 import { getTimelineProgress } from "../../domain/timeline";
+import { formatCurrency } from "../../lib/format";
+
+type TimelineProgress = ReturnType<typeof getTimelineProgress>;
 
 interface EventOverviewProps {
   budget: BudgetSummary;
   progress: TimelineProgress;
 }
 
-const currency = new Intl.NumberFormat("en-IN", {
-  style: "currency",
-  currency: "INR",
-  maximumFractionDigits: 0,
-});
-
 export default function EventOverview({
   budget,
   progress,
 }: EventOverviewProps) {
-  const planningBudgetUsed =
+  const planningBudgetUsed = budgetUsedPercent(budget);
+
+  const remainingBudgetPercent =
     budget.availableForPlanning > 0
-      ? Math.min(
-          100,
-          (budget.allocated / budget.availableForPlanning) * 100,
+      ? Math.max(
+          0,
+          Math.min(
+            100,
+            (budget.remaining / budget.availableForPlanning) * 100,
+          ),
         )
-      : budget.allocated > 0
-        ? 100
-        : 0;
+      : 0;
 
   const budgetCards = [
     {
       label: "Total budget",
-      value: currency.format(budget.totalBudget),
+      value: formatCurrency(budget.totalBudget),
       note: "Your overall spending limit",
       icon: IndianRupee,
       iconStyle: "bg-violet-100 text-violet-700",
@@ -47,7 +45,7 @@ export default function EventOverview({
     },
     {
       label: "Planned expenses",
-      value: currency.format(budget.allocated),
+      value: formatCurrency(budget.allocated),
       note: `${Math.round(planningBudgetUsed)}% of the spendable budget`,
       icon: Wallet,
       iconStyle: "bg-blue-100 text-blue-700",
@@ -56,7 +54,7 @@ export default function EventOverview({
     },
     {
       label: "Available balance",
-      value: currency.format(budget.remaining),
+      value: formatCurrency(budget.remaining),
       note: budget.isOverBudget
         ? "Expenses exceed your spending limit"
         : "Available after protecting your reserve",
@@ -65,16 +63,7 @@ export default function EventOverview({
         ? "bg-red-100 text-red-700"
         : "bg-emerald-100 text-emerald-700",
       barStyle: budget.isOverBudget ? "bg-red-500" : "bg-emerald-500",
-      barWidth:
-        budget.availableForPlanning > 0
-          ? Math.max(
-              0,
-              Math.min(
-                100,
-                (budget.remaining / budget.availableForPlanning) * 100,
-              ),
-            )
-          : 0,
+      barWidth: remainingBudgetPercent,
     },
     {
       label: "Tasks completed",

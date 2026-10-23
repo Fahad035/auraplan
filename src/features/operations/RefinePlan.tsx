@@ -3,10 +3,12 @@ import { Sparkles } from "lucide-react";
 
 import Button from "../../components/ui/Button";
 import Card from "../../components/ui/Card";
+import { labelClass, roomyInputClass } from "../../components/ui/fieldStyles";
 import {
   applyRecommendations,
   toPreviousPlan,
 } from "../../domain/planBuilder";
+import { LIMITS } from "../../domain/recommendation";
 import type { EventPlan } from "../../domain/schema";
 import { generateRecommendations } from "../../lib/api";
 
@@ -15,8 +17,7 @@ type RefinePlanProps = {
   onApply: (plan: EventPlan) => void;
 };
 
-const MIN_LENGTH = 3;
-const MAX_LENGTH = 300;
+const { minFeedbackLength, maxFeedbackLength } = LIMITS;
 
 export default function RefinePlan({ plan, onApply }: RefinePlanProps) {
   const [feedback, setFeedback] = useState("");
@@ -31,9 +32,9 @@ export default function RefinePlan({ plan, onApply }: RefinePlanProps) {
 
     const request = feedback.trim();
 
-    if (request.length < MIN_LENGTH || request.length > MAX_LENGTH) {
+    if (request.length < minFeedbackLength || request.length > maxFeedbackLength) {
       setError(
-        `Describe the change in ${MIN_LENGTH} to ${MAX_LENGTH} characters.`,
+        `Describe the change in ${minFeedbackLength} to ${maxFeedbackLength} characters.`,
       );
       return;
     }
@@ -72,10 +73,7 @@ export default function RefinePlan({ plan, onApply }: RefinePlanProps) {
         description="Ask for changes in plain words, such as “make it cheaper” or “more eco-friendly”. Completed tasks and booked vendors are kept."
       >
         <form onSubmit={handleSubmit} aria-busy={isRefining} className="space-y-3">
-          <label
-            htmlFor="refine-feedback"
-            className="text-sm font-medium text-slate-700"
-          >
+          <label htmlFor="refine-feedback" className={labelClass}>
             What would you like to change?
           </label>
 
@@ -83,12 +81,12 @@ export default function RefinePlan({ plan, onApply }: RefinePlanProps) {
             id="refine-feedback"
             value={feedback}
             onChange={(event) => setFeedback(event.target.value)}
-            maxLength={MAX_LENGTH}
+            maxLength={maxFeedbackLength}
             rows={3}
             aria-describedby={error ? "refine-error" : undefined}
             aria-invalid={Boolean(error)}
             placeholder="e.g. Reduce the decoration cost and add a live music option"
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+            className={roomyInputClass}
           />
 
           {error && (

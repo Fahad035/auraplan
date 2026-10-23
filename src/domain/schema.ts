@@ -1,10 +1,9 @@
 import { z } from "zod";
+import { EventTypeSchema } from "./recommendation";
 
-export const EventTypeSchema = z.enum([
-  "wedding",
-  "birthday",
-  "community",
-]);
+export { EventTypeSchema };
+
+const DateStringSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 export const BudgetItemSchema = z.object({
   id: z.string().min(1),
@@ -15,7 +14,7 @@ export const BudgetItemSchema = z.object({
 export const TimelineItemSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  date: DateStringSchema,
   completed: z.boolean(),
   urgent: z.boolean().optional(),
 });
@@ -26,7 +25,7 @@ export const VendorSchema = z.object({
   category: z.string().min(1),
   contact: z.string().optional(),
   tip: z.string().optional(),
-  bookBy: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  bookBy: DateStringSchema.optional(),
   booked: z.boolean(),
 });
 
@@ -34,7 +33,7 @@ export const EventPlanSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1),
   eventType: EventTypeSchema,
-  eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  eventDate: DateStringSchema,
   location: z.string(),
   guestCount: z.number().int().positive(),
   totalBudget: z.number().finite().nonnegative(),

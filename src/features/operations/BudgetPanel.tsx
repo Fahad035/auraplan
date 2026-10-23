@@ -1,7 +1,11 @@
 import { useState, type FormEvent } from "react";
 import { Plus, Trash2, Wallet } from "lucide-react";
-import { calculateBudget } from "../../domain/budget";
+
+import { inputClass as baseInputClass } from "../../components/ui/fieldStyles";
+import ProgressBar from "../../components/ui/ProgressBar";
+import { budgetUsedPercent, calculateBudget } from "../../domain/budget";
 import type { BudgetItem } from "../../domain/schema";
+import { formatCurrency } from "../../lib/format";
 
 interface BudgetPanelProps {
   totalBudget: number;
@@ -10,14 +14,9 @@ interface BudgetPanelProps {
   onChange: (items: BudgetItem[]) => void;
 }
 
-const currency = new Intl.NumberFormat("en-IN", {
-  style: "currency",
-  currency: "INR",
-  maximumFractionDigits: 0,
-});
+const MAX_CATEGORY_NAME_LENGTH = 100;
 
-const inputClass =
-  "w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100";
+const inputClass = `${baseInputClass} min-w-0`;
 
 export default function BudgetPanel({
   totalBudget,
@@ -102,15 +101,13 @@ export default function BudgetPanel({
     onChange(items.filter((item) => item.id !== id));
   }
 
-  const allocationPercent =
-    budget.availableForPlanning <= 0
-      ? budget.allocated > 0
-        ? 100
-        : 0
-      : Math.min(
-          100,
-          (budget.allocated / budget.availableForPlanning) * 100,
-        );
+  const allocationPercent = budgetUsedPercent(budget);
+
+  const summaryTiles = [
+    { label: "Total budget", value: budget.totalBudget },
+    { label: `Reserve (${contingencyPercent}%)`, value: budget.contingency },
+    { label: "Planned expenses", value: budget.allocated },
+  ];
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
@@ -129,28 +126,14 @@ export default function BudgetPanel({
       </div>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-3">
-        <div className="rounded-xl bg-slate-50 p-4">
-          <p className="text-xs text-slate-500">Total budget</p>
-          <p className="mt-2 font-semibold text-slate-900">
-            {currency.format(budget.totalBudget)}
-          </p>
-        </div>
-
-        <div className="rounded-xl bg-slate-50 p-4">
-          <p className="text-xs text-slate-500">
-            Reserve ({contingencyPercent}%)
-          </p>
-          <p className="mt-2 font-semibold text-slate-900">
-            {currency.format(budget.contingency)}
-          </p>
-        </div>
-
-        <div className="rounded-xl bg-slate-50 p-4">
-          <p className="text-xs text-slate-500">Planned expenses</p>
-          <p className="mt-2 font-semibold text-slate-900">
-            {currency.format(budget.allocated)}
-          </p>
-        </div>
+        {summaryTiles.map((tile) => (
+          <div key={tile.label} className="rounded-xl bg-slate-50 p-4">
+            <p className="text-xs text-slate-500">{tile.label}</p>
+            <p className="mt-2 font-semibold text-slate-900">
+              {formatCurrency(tile.value)}
+            </p>
+          </div>
+        ))}
       </div>
 
       <div className="mt-5">
@@ -163,30 +146,20 @@ export default function BudgetPanel({
               budget.isOverBudget ? "text-red-600 dark:text-red-300" : "text-emerald-700 dark:text-emerald-300"
             }`}
           >
-            {currency.format(budget.remaining)}
+            {formatCurrency(budget.remaining)}
           </span>
         </div>
 
-        <div
-          className="h-2 overflow-hidden rounded-full bg-slate-100"
-          role="progressbar"
-          aria-label="Budget allocation"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={Math.round(allocationPercent)}
-        >
-          <div
-            className={`h-full rounded-full transition-all ${
-              budget.isOverBudget ? "bg-red-500" : "bg-violet-600"
-            }`}
-            style={{ width: `${allocationPercent}%` }}
-          />
-        </div>
+        <ProgressBar
+          label="Budget allocation"
+          percentage={allocationPercent}
+          barClassName={budget.isOverBudget ? "bg-red-500" : "bg-violet-600"}
+        />
 
         {budget.isOverBudget && (
           <p role="alert" className="mt-2 text-sm text-red-600">
             Your expenses exceed the available budget by{" "}
-            {currency.format(-budget.remaining)}.
+            {formatCurrency(-budget.remaining)}.
           </p>
         )}
       </div>
@@ -223,7 +196,7 @@ export default function BudgetPanel({
                   </span>
                   <input
                     aria-label={`Name for ${item.name}`}
-                    maxLength={100}
+                    maxLength={MAX_CATEGORY_NAME_LENGTH}
                     value={item.name}
                     onChange={(event) =>
                       updateName(item.id, event.target.value)
@@ -275,7 +248,7 @@ export default function BudgetPanel({
             value={name}
             onChange={(event) => setName(event.target.value)}
             placeholder="e.g. Photography"
-            maxLength={100}
+            maxLength={MAX_CATEGORY_NAME_LENGTH}
             className={inputClass}
           />
         </label>

@@ -7,15 +7,25 @@ import {
   Trash2,
 } from "lucide-react";
 
-import type { Vendor } from "../../domain/schema";
-import { getVendorProgress } from "../../domain/checklist";
-import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
+import Card from "../../components/ui/Card";
+import { inputClass, labelClass } from "../../components/ui/fieldStyles";
+import ProgressBar from "../../components/ui/ProgressBar";
+import {
+  getVendorProgress,
+  toggleVendorBooking,
+} from "../../domain/checklist";
+import type { Vendor } from "../../domain/schema";
+import { formatShortDate } from "../../lib/format";
 
 type VendorChecklistProps = {
   vendors: Vendor[];
   onChange: (vendors: Vendor[]) => void;
 };
+
+const MAX_VENDOR_NAME_LENGTH = 100;
+const MAX_VENDOR_CONTACT_LENGTH = 150;
+const DEFAULT_CATEGORY = "Venue";
 
 const vendorCategories = [
   "Venue",
@@ -33,7 +43,7 @@ export default function VendorChecklist({
   onChange,
 }: VendorChecklistProps) {
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("Venue");
+  const [category, setCategory] = useState(DEFAULT_CATEGORY);
   const [contact, setContact] = useState("");
   const [error, setError] = useState("");
 
@@ -52,13 +62,17 @@ export default function VendorChecklist({
       return;
     }
 
-    if (trimmedName.length > 100) {
-      setError("Vendor names must be 100 characters or fewer.");
+    if (trimmedName.length > MAX_VENDOR_NAME_LENGTH) {
+      setError(
+        `Vendor names must be ${MAX_VENDOR_NAME_LENGTH} characters or fewer.`,
+      );
       return;
     }
 
-    if (trimmedContact.length > 150) {
-      setError("Contact information must be 150 characters or fewer.");
+    if (trimmedContact.length > MAX_VENDOR_CONTACT_LENGTH) {
+      setError(
+        `Contact information must be ${MAX_VENDOR_CONTACT_LENGTH} characters or fewer.`,
+      );
       return;
     }
 
@@ -72,18 +86,8 @@ export default function VendorChecklist({
 
     onChange([...vendors, newVendor]);
     setName("");
-    setCategory("Venue");
+    setCategory(DEFAULT_CATEGORY);
     setContact("");
-  }
-
-  function toggleVendor(id: string) {
-    onChange(
-      vendors.map((vendor) =>
-        vendor.id === id
-          ? { ...vendor, booked: !vendor.booked }
-          : vendor,
-      ),
-    );
   }
 
   function deleteVendor(id: string) {
@@ -97,10 +101,7 @@ export default function VendorChecklist({
     >
       <form onSubmit={addVendor} className="mb-6 space-y-4">
         <div>
-          <label
-            htmlFor="vendor-name"
-            className="text-sm font-medium text-slate-700"
-          >
+          <label htmlFor="vendor-name" className={labelClass}>
             Vendor name
           </label>
           <input
@@ -108,23 +109,20 @@ export default function VendorChecklist({
             value={name}
             onChange={(event) => setName(event.target.value)}
             placeholder="e.g. Grand Palace Banquets"
-            maxLength={100}
-            className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+            maxLength={MAX_VENDOR_NAME_LENGTH}
+            className={`mt-2 ${inputClass}`}
           />
         </div>
 
         <div>
-          <label
-            htmlFor="vendor-category"
-            className="text-sm font-medium text-slate-700"
-          >
+          <label htmlFor="vendor-category" className={labelClass}>
             Vendor category
           </label>
           <select
             id="vendor-category"
             value={category}
             onChange={(event) => setCategory(event.target.value)}
-            className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+            className={`mt-2 ${inputClass}`}
           >
             {vendorCategories.map((item) => (
               <option key={item} value={item}>
@@ -135,10 +133,7 @@ export default function VendorChecklist({
         </div>
 
         <div>
-          <label
-            htmlFor="vendor-contact"
-            className="text-sm font-medium text-slate-700"
-          >
+          <label htmlFor="vendor-contact" className={labelClass}>
             Contact information (optional)
           </label>
           <input
@@ -146,8 +141,8 @@ export default function VendorChecklist({
             value={contact}
             onChange={(event) => setContact(event.target.value)}
             placeholder="Phone number or email"
-            maxLength={150}
-            className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+            maxLength={MAX_VENDOR_CONTACT_LENGTH}
+            className={`mt-2 ${inputClass}`}
           />
         </div>
 
@@ -163,19 +158,11 @@ export default function VendorChecklist({
         </Button>
       </form>
 
-      <div
-        className="mb-5 h-2 overflow-hidden rounded-full bg-slate-100"
-        role="progressbar"
-        aria-label="Vendor booking progress"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={percentage}
-      >
-        <div
-          className="h-full rounded-full bg-violet-600 transition-all"
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
+      <ProgressBar
+        label="Vendor booking progress"
+        percentage={percentage}
+        className="mb-5"
+      />
 
       {vendors.length === 0 ? (
         <div className="py-5 text-center">
@@ -198,7 +185,7 @@ export default function VendorChecklist({
             >
               <button
                 type="button"
-                onClick={() => toggleVendor(vendor.id)}
+                onClick={() => onChange(toggleVendorBooking(vendors, vendor.id))}
                 aria-label={
                   vendor.booked
                     ? `Mark ${vendor.name} unbooked`
@@ -229,10 +216,7 @@ export default function VendorChecklist({
                 {vendor.bookBy && (
                   <p className="mt-1 text-xs font-medium text-slate-600">
                     Book by{" "}
-                    {new Date(`${vendor.bookBy}T00:00:00`).toLocaleDateString(
-                      "en-IN",
-                      { day: "numeric", month: "short", year: "numeric" },
-                    )}
+                    {formatShortDate(vendor.bookBy)}
                   </p>
                 )}
 

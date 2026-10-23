@@ -1,18 +1,12 @@
-
 import { PiggyBank, Wallet } from "lucide-react";
 
 import type { BudgetSummary } from "../../domain/budget";
+import { formatCurrency } from "../../lib/format";
 
 interface BudgetReserveSummaryProps {
   budget: BudgetSummary;
   contingencyPercent: number;
 }
-
-const currency = new Intl.NumberFormat("en-IN", {
-  style: "currency",
-  currency: "INR",
-  maximumFractionDigits: 0,
-});
 
 export default function BudgetReserveSummary({
   budget,
@@ -36,7 +30,7 @@ export default function BudgetReserveSummary({
             Funds set aside for unexpected event expenses.
           </p>
           <p className="mt-3 wrap-break-word text-lg font-bold text-slate-900">
-            {currency.format(budget.contingency)}
+            {formatCurrency(budget.contingency)}
           </p>
           <p className="mt-1 text-xs text-slate-500">
             {contingencyPercent}% of your total budget
@@ -57,7 +51,7 @@ export default function BudgetReserveSummary({
             Your spending limit after reserving contingency funds.
           </p>
           <p className="mt-3 wrap-break-word text-lg font-bold text-slate-900">
-            {currency.format(budget.availableForPlanning)}
+            {formatCurrency(budget.availableForPlanning)}
           </p>
           <p className="mt-1 text-xs text-slate-500">
             Before subtracting planned expenses

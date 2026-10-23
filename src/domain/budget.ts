@@ -50,3 +50,17 @@ export function calculateBudget(
     isOverBudget: remaining < 0,
   };
 }
+
+/** Share of the planning budget already allocated, from 0 to 100. */
+export function budgetUsedPercent(
+  budget: Pick<BudgetSummary, "availableForPlanning" | "allocated">,
+): number {
+  if (budget.availableForPlanning <= 0) {
+    return budget.allocated > 0 ? 100 : 0;
+  }
+
+  return Math.min(
+    100,
+    (budget.allocated / budget.availableForPlanning) * 100,
+  );
+}

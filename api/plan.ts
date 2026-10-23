@@ -8,14 +8,21 @@ import { z } from "zod";
 
 // NOTE: everything between here and MAX_REQUEST_BYTES mirrors
 // src/domain/recommendation.ts. It is inlined because Vercel does not bundle
-// relative imports for this ESM function; tests/unit/schema-parity.test.ts
-// fails if the two copies drift apart.
-
-
+// relative imports for this ESM function (see docs/adr/0007); the
+// tests/unit/schema-parity.test.ts test fails if the two copies drift apart.
 
 const CONTINGENCY_PERCENT = 10;
 
 const EventTypeSchema = z.enum(["wedding", "birthday", "community"]);
+
+/** Field limits shared by request validation, model output and the UI. */
+const LIMITS = {
+  maxLocationLength: 150,
+  maxGuests: 100_000,
+  maxBudget: 1_000_000_000,
+  minFeedbackLength: 3,
+  maxFeedbackLength: 300,
+} as const;
 
 const EventDateSchema = z
   .string()
@@ -29,54 +36,67 @@ const EventDateSchema = z
     );
   }, "Invalid calendar date.");
 
+// Building blocks reused by every schema below, so each field limit is
+// declared exactly once.
+const requiredText = (maxLength: number) =>
+  z.string().trim().min(1).max(maxLength);
+
+const listOf = <T extends z.ZodType>(item: T, min: number, max: number) =>
+  z.array(item).min(min).max(max);
+
+const IdeaSchema = requiredText(250);
+const DaysBeforeSchema = z.number().int().min(0).max(365);
+const UrgentSchema = z.boolean().default(false);
+
+const BudgetAmountShape = {
+  name: requiredText(80),
+  amount: z.number().finite().nonnegative(),
+};
+
+const BudgetWeightShape = {
+  name: requiredText(80),
+  weight: z.number().finite().positive().max(1_000_000),
+};
+
+const TimelineTaskShape = {
+  title: requiredText(120),
+  daysBeforeEvent: DaysBeforeSchema,
+};
+
+const VendorRoleShape = {
+  name: requiredText(100),
+  category: requiredText(40),
+};
+
+const VendorAdviceShape = {
+  ...VendorRoleShape,
+  tip: z.string().trim().max(200).default(""),
+  bookByDaysBefore: DaysBeforeSchema.default(30),
+};
+
 /** The current plan, sent back to the model when the user asks for changes. */
-const PreviousPlanSchema = z
-  .object({
-    ideas: z.array(z.string().trim().min(1).max(250)).max(8),
-    budgetItems: z
-      .array(
-        z
-          .object({
-            name: z.string().trim().min(1).max(80),
-            amount: z.number().finite().nonnegative(),
-          })
-          .strict(),
-      )
-      .max(10),
-    timeline: z
-      .array(
-        z
-          .object({
-            title: z.string().trim().min(1).max(120),
-            daysBeforeEvent: z.number().int().min(0).max(365),
-          })
-          .strict(),
-      )
-      .max(12),
-    vendors: z
-      .array(
-        z
-          .object({
-            name: z.string().trim().min(1).max(100),
-            category: z.string().trim().min(1).max(40),
-          })
-          .strict(),
-      )
-      .max(10),
-  })
-  .strict();
+const PreviousPlanSchema = z.strictObject({
+  ideas: listOf(IdeaSchema, 0, 8),
+  budgetItems: listOf(z.strictObject(BudgetAmountShape), 0, 10),
+  timeline: listOf(z.strictObject(TimelineTaskShape), 0, 12),
+  vendors: listOf(z.strictObject(VendorRoleShape), 0, 10),
+});
 
 const PlanRequestSchema = z
-  .object({
+  .strictObject({
     eventType: EventTypeSchema,
     eventDate: EventDateSchema,
-    location: z.string().trim().min(1).max(150),
-    guestCount: z.number().int().min(1).max(100_000),
-    totalBudget: z.number().int().positive().max(1_000_000_000),
-    feedback: z.string().trim().min(3).max(300).optional(),
+    location: requiredText(LIMITS.maxLocationLength),
+    guestCount: z.number().int().min(1).max(LIMITS.maxGuests),
+    totalBudget: z.number().int().positive().max(LIMITS.maxBudget),
+    feedback: z
+      .string()
+      .trim()
+      .min(LIMITS.minFeedbackLength)
+      .max(LIMITS.maxFeedbackLength)
+      .optional(),
     previousPlan: PreviousPlanSchema.optional(),
   })
-  .strict()
   .refine((value) => Boolean(value.feedback) === Boolean(value.previousPlan), {
     message: "feedback and previousPlan must be provided together.",
   });
@@ -85,90 +105,28 @@ const PlanRequestSchema = z
  * What the model returns. The model supplies judgment (relative budget
  * weights, task offsets, vendor advice); code does the arithmetic.
  */
-const ModelOutputSchema = z
-  .object({
-    ideas: z.array(z.string().trim().min(1).max(250)).min(3).max(8),
-    budgetItems: z
-      .array(
-        z
-          .object({
-            name: z.string().trim().min(1).max(80),
-            weight: z.number().finite().positive().max(1_000_000),
-          })
-          .strict(),
-      )
-      .min(3)
-      .max(10),
-    timeline: z
-      .array(
-        z
-          .object({
-            title: z.string().trim().min(1).max(120),
-            daysBeforeEvent: z.number().int().min(0).max(365),
-          })
-          .strict(),
-      )
-      .min(3)
-      .max(12),
-    vendors: z
-      .array(
-        z
-          .object({
-            name: z.string().trim().min(1).max(100),
-            category: z.string().trim().min(1).max(40),
-            tip: z.string().trim().max(200).default(""),
-            bookByDaysBefore: z.number().int().min(0).max(365).default(30),
-          })
-          .strict(),
-      )
-      .max(10)
-      .default([]),
-  })
-  .strict();
+const ModelOutputSchema = z.strictObject({
+  ideas: listOf(IdeaSchema, 3, 8),
+  budgetItems: listOf(z.strictObject(BudgetWeightShape), 3, 10),
+  timeline: listOf(z.strictObject(TimelineTaskShape), 3, 12),
+  vendors: listOf(z.strictObject(VendorAdviceShape), 0, 10).default([]),
+});
 
 /** What the API returns to the browser after server-side enrichment. */
-const RecommendationSchema = z
-  .object({
-    ideas: z.array(z.string().trim().min(1).max(250)).min(3).max(8),
-    budgetItems: z
-      .array(
-        z
-          .object({
-            name: z.string().trim().min(1).max(80),
-            amount: z.number().finite().nonnegative(),
-          })
-          .strict(),
-      )
-      .min(3)
-      .max(10),
-    timeline: z
-      .array(
-        z
-          .object({
-            title: z.string().trim().min(1).max(120),
-            daysBeforeEvent: z.number().int().min(0).max(365),
-            urgent: z.boolean().default(false),
-          })
-          .strict(),
-      )
-      .min(3)
-      .max(12),
-    vendors: z
-      .array(
-        z
-          .object({
-            name: z.string().trim().min(1).max(100),
-            category: z.string().trim().min(1).max(40),
-            tip: z.string().trim().max(200).default(""),
-            bookByDaysBefore: z.number().int().min(0).max(365).default(30),
-            urgent: z.boolean().default(false),
-          })
-          .strict(),
-      )
-      .max(10)
-      .default([]),
-  })
-  .strict();
+const RecommendationSchema = z.strictObject({
+  ideas: listOf(IdeaSchema, 3, 8),
+  budgetItems: listOf(z.strictObject(BudgetAmountShape), 3, 10),
+  timeline: listOf(
+    z.strictObject({ ...TimelineTaskShape, urgent: UrgentSchema }),
+    3,
+    12,
+  ),
+  vendors: listOf(
+    z.strictObject({ ...VendorAdviceShape, urgent: UrgentSchema }),
+    0,
+    10,
+  ).default([]),
+});
 
 /**
  * Turns relative weights into whole-number amounts that add up to exactly
@@ -251,47 +209,56 @@ const MAX_REQUESTS_PER_WINDOW = 10;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
 const GEMINI_TIMEOUT_MS = 20_000;
 const MAX_ATTEMPTS = 2;
+const MS_PER_DAY = 86_400_000;
 
 const checkRateLimit = createRateLimiter(
   RATE_LIMIT_WINDOW_MS,
   MAX_REQUESTS_PER_WINDOW,
 );
 
-function getClientIp(req: VercelRequest): string {
-  const forwardedFor = req.headers["x-forwarded-for"];
-  const realIp = req.headers["x-real-ip"];
+type PlanRequest = z.infer<typeof PlanRequestSchema>;
+type ModelOutput = z.infer<typeof ModelOutputSchema>;
+type Recommendations = z.infer<typeof RecommendationSchema>;
 
-  // Best-effort identifier; Vercel overwrites these headers at the edge.
-  const candidate =
-    (typeof realIp === "string" ? realIp : undefined) ??
-    (typeof forwardedFor === "string"
-      ? forwardedFor.split(",")[0]?.trim()
-      : undefined);
+// --- Errors ------------------------------------------------------------------
 
-  if (
-    candidate &&
-    candidate.length <= 100 &&
-    /^[a-fA-F0-9:.]+$/.test(candidate)
+/** An expected failure that maps directly to an HTTP response. */
+class ApiError extends Error {
+  readonly status: number;
+  readonly headers: Record<string, string>;
+
+  constructor(
+    status: number,
+    message: string,
+    headers: Record<string, string> = {},
   ) {
-    return candidate;
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.headers = headers;
   }
-
-  return req.socket?.remoteAddress ?? "unknown";
 }
 
-function setRateLimitHeaders(
-  res: VercelResponse,
-  remaining: number,
-  resetAt: number,
-): void {
-  res.setHeader("X-RateLimit-Limit", String(MAX_REQUESTS_PER_WINDOW));
-  res.setHeader("X-RateLimit-Remaining", String(remaining));
-  res.setHeader("X-RateLimit-Reset", String(Math.ceil(resetAt / 1000)));
-}
-
-function getDaysBetween(start: Date, end: Date): number {
-  return Math.floor((end.getTime() - start.getTime()) / 86_400_000);
-}
+const MESSAGES = {
+  methodNotAllowed: "Method not allowed.",
+  notJson: "Requests must be sent as application/json.",
+  tooLarge: "The request is too large. Please shorten your event details.",
+  rateLimited: "Too many planning requests. Please wait a minute and try again.",
+  invalidBody: "Please provide valid event planning details.",
+  invalidDetails:
+    "Please provide valid event details, a whole-number budget, a valid event date, and (when refining) a short change request.",
+  pastDate:
+    "The event date is in the past. Please choose today or a future date.",
+  unavailable: "The AI service is temporarily unavailable.",
+  emptyResponse:
+    "The AI service returned an empty response. Please try again.",
+  unreadableResponse:
+    "The AI response could not be processed. Please try again.",
+  invalidPlan: "The AI generated an invalid plan. Please try again.",
+  timeout: "The AI service took too long to respond. Please try again.",
+  generationFailed:
+    "Unable to generate recommendations right now. Please try again.",
+} as const;
 
 function isTransientError(error: unknown): boolean {
   const status =
@@ -302,7 +269,14 @@ function isTransientError(error: unknown): boolean {
   return status === 429 || status === 500 || status === 503;
 }
 
-type PlanRequest = z.infer<typeof PlanRequestSchema>;
+function isTimeoutError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    (error.name === "TimeoutError" || error.name === "AbortError")
+  );
+}
+
+// --- Prompt ------------------------------------------------------------------
 
 export const SYSTEM_INSTRUCTION = `You are AuraPlan, a practical celebration planning assistant for weddings, birthdays and community events in India.
 
@@ -337,16 +311,69 @@ export function buildPrompt(request: PlanRequest, todayString: string): string {
   return sections.join("\n\n");
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader("Cache-Control", "no-store");
-  res.setHeader("X-Content-Type-Options", "nosniff");
+// --- Gemini response schema --------------------------------------------------
 
+const textField = { type: "STRING" } as const;
+const integerField = { type: "INTEGER" } as const;
+const numberField = { type: "NUMBER" } as const;
+
+/** Describes an object whose fields are all required, in the given order. */
+function objectSchema(properties: Record<string, object>) {
+  const keys = Object.keys(properties);
+
+  return {
+    type: "OBJECT",
+    properties,
+    required: keys,
+    propertyOrdering: keys,
+  } as const;
+}
+
+const arrayOf = (items: object) => ({ type: "ARRAY", items }) as const;
+
+const RESPONSE_SCHEMA = objectSchema({
+  ideas: arrayOf(textField),
+  budgetItems: arrayOf(objectSchema({ name: textField, weight: numberField })),
+  timeline: arrayOf(
+    objectSchema({ title: textField, daysBeforeEvent: integerField }),
+  ),
+  vendors: arrayOf(
+    objectSchema({
+      name: textField,
+      category: textField,
+      tip: textField,
+      bookByDaysBefore: integerField,
+    }),
+  ),
+});
+
+// --- Request validation ------------------------------------------------------
+
+function getClientIp(req: VercelRequest): string {
+  const forwardedFor = req.headers["x-forwarded-for"];
+  const realIp = req.headers["x-real-ip"];
+
+  // Best-effort identifier; Vercel overwrites these headers at the edge.
+  const candidate =
+    (typeof realIp === "string" ? realIp : undefined) ??
+    (typeof forwardedFor === "string"
+      ? forwardedFor.split(",")[0]?.trim()
+      : undefined);
+
+  if (
+    candidate &&
+    candidate.length <= 100 &&
+    /^[a-fA-F0-9:.]+$/.test(candidate)
+  ) {
+    return candidate;
+  }
+
+  return req.socket?.remoteAddress ?? "unknown";
+}
+
+function assertValidTransport(req: VercelRequest): void {
   if (req.method !== "POST") {
-    res.setHeader("Allow", "POST");
-
-    return res.status(405).json({
-      error: "Method not allowed.",
-    });
+    throw new ApiError(405, MESSAGES.methodNotAllowed, { Allow: "POST" });
   }
 
   const contentType = req.headers["content-type"];
@@ -355,9 +382,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     typeof contentType === "string" &&
     !contentType.toLowerCase().startsWith("application/json")
   ) {
-    return res.status(415).json({
-      error: "Requests must be sent as application/json.",
-    });
+    throw new ApiError(415, MESSAGES.notJson);
   }
 
   const contentLength = req.headers["content-length"];
@@ -366,275 +391,265 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     typeof contentLength === "string" &&
     (!/^\d+$/.test(contentLength) || Number(contentLength) > MAX_REQUEST_BYTES)
   ) {
-    return res.status(413).json({
-      error: "The request is too large. Please shorten your event details.",
-    });
+    throw new ApiError(413, MESSAGES.tooLarge);
   }
+}
 
-  const ip = getClientIp(req);
-  const rateLimit = checkRateLimit(ip);
+function enforceRateLimit(req: VercelRequest, res: VercelResponse): void {
+  const { allowed, remaining, resetAt } = checkRateLimit(getClientIp(req));
 
-  setRateLimitHeaders(res, rateLimit.remaining, rateLimit.resetAt);
+  res.setHeader("X-RateLimit-Limit", String(MAX_REQUESTS_PER_WINDOW));
+  res.setHeader("X-RateLimit-Remaining", String(remaining));
+  res.setHeader("X-RateLimit-Reset", String(Math.ceil(resetAt / 1000)));
 
-  if (!rateLimit.allowed) {
-    res.setHeader(
-      "Retry-After",
-      String(Math.max(1, Math.ceil((rateLimit.resetAt - Date.now()) / 1000))),
+  if (!allowed) {
+    const retryAfterSeconds = Math.max(
+      1,
+      Math.ceil((resetAt - Date.now()) / 1000),
     );
 
-    return res.status(429).json({
-      error: "Too many planning requests. Please wait a minute and try again.",
+    throw new ApiError(429, MESSAGES.rateLimited, {
+      "Retry-After": String(retryAfterSeconds),
     });
   }
+}
 
-  if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) {
-    return res.status(400).json({
-      error: "Please provide valid event planning details.",
-    });
+function parsePlanRequest(body: unknown): PlanRequest {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    throw new ApiError(400, MESSAGES.invalidBody);
   }
 
   let serializedBody: string;
 
   try {
-    serializedBody = JSON.stringify(req.body);
+    serializedBody = JSON.stringify(body);
   } catch {
-    return res.status(400).json({
-      error: "Please provide valid event planning details.",
-    });
+    throw new ApiError(400, MESSAGES.invalidBody);
   }
 
   if (Buffer.byteLength(serializedBody, "utf8") > MAX_REQUEST_BYTES) {
-    return res.status(413).json({
-      error: "The request is too large. Please shorten your event details.",
-    });
+    throw new ApiError(413, MESSAGES.tooLarge);
   }
 
-  const parsedRequest = PlanRequestSchema.safeParse(req.body);
+  const parsed = PlanRequestSchema.safeParse(body);
 
-  if (!parsedRequest.success) {
-    return res.status(400).json({
-      error:
-        "Please provide valid event details, a whole-number budget, a valid event date, and (when refining) a short change request.",
-    });
+  if (!parsed.success) {
+    throw new ApiError(400, MESSAGES.invalidDetails);
   }
 
-  const { eventDate, totalBudget } = parsedRequest.data;
+  return parsed.data;
+}
 
-  // Compare date-only values in UTC to avoid time-of-day differences.
-  const todayString = new Date().toISOString().slice(0, 10);
-  const todayUtc = new Date(`${todayString}T00:00:00.000Z`);
-  const eventDateUtc = new Date(`${eventDate}T00:00:00.000Z`);
+/** Whole days from today (UTC, date-only) until the event; negative if past. */
+function getDaysUntilEvent(eventDate: string, todayString: string): number {
+  const today = new Date(`${todayString}T00:00:00.000Z`);
+  const event = new Date(`${eventDate}T00:00:00.000Z`);
 
-  const daysUntilEvent = getDaysBetween(todayUtc, eventDateUtc);
+  return Math.floor((event.getTime() - today.getTime()) / MS_PER_DAY);
+}
 
-  if (daysUntilEvent < 0) {
-    return res.status(400).json({
-      error:
-        "The event date is in the past. Please choose today or a future date.",
-    });
-  }
-
+function requireApiKey(): string {
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
     console.error("AuraPlan AI service is not configured.");
-
-    return res.status(500).json({
-      error: "The AI service is temporarily unavailable.",
-    });
+    throw new ApiError(500, MESSAGES.unavailable);
   }
 
-  try {
-    const ai = new GoogleGenAI({ apiKey });
-    const startedAt = Date.now();
+  return apiKey;
+}
 
-    const request: GenerateContentParameters = {
-      model: GEMINI_MODEL,
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: buildPrompt(parsedRequest.data, todayString) }],
-        },
-      ],
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: "OBJECT",
-          properties: {
-            ideas: {
-              type: "ARRAY",
-              items: { type: "STRING" },
-            },
-            budgetItems: {
-              type: "ARRAY",
-              items: {
-                type: "OBJECT",
-                properties: {
-                  name: { type: "STRING" },
-                  weight: { type: "NUMBER" },
-                },
-                required: ["name", "weight"],
-                propertyOrdering: ["name", "weight"],
-              },
-            },
-            timeline: {
-              type: "ARRAY",
-              items: {
-                type: "OBJECT",
-                properties: {
-                  title: { type: "STRING" },
-                  daysBeforeEvent: { type: "INTEGER" },
-                },
-                required: ["title", "daysBeforeEvent"],
-                propertyOrdering: ["title", "daysBeforeEvent"],
-              },
-            },
-            vendors: {
-              type: "ARRAY",
-              items: {
-                type: "OBJECT",
-                properties: {
-                  name: { type: "STRING" },
-                  category: { type: "STRING" },
-                  tip: { type: "STRING" },
-                  bookByDaysBefore: { type: "INTEGER" },
-                },
-                required: ["name", "category", "tip", "bookByDaysBefore"],
-                propertyOrdering: [
-                  "name",
-                  "category",
-                  "tip",
-                  "bookByDaysBefore",
-                ],
-              },
-            },
-          },
-          required: ["ideas", "budgetItems", "timeline", "vendors"],
-          propertyOrdering: ["ideas", "budgetItems", "timeline", "vendors"],
-        },
+// --- Generation --------------------------------------------------------------
+
+function buildGeminiRequest(
+  request: PlanRequest,
+  todayString: string,
+): GenerateContentParameters {
+  return {
+    model: GEMINI_MODEL,
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: buildPrompt(request, todayString) }],
       },
-    };
+    ],
+    config: {
+      systemInstruction: SYSTEM_INSTRUCTION,
+      responseMimeType: "application/json",
+      responseSchema: RESPONSE_SCHEMA,
+    },
+  };
+}
 
-    let response: GenerateContentResponse | undefined;
-
-    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
-      try {
-        response = await ai.models.generateContent({
-          ...request,
-          config: {
-            ...request.config,
-            abortSignal: AbortSignal.timeout(GEMINI_TIMEOUT_MS),
-          },
-        });
-        break;
-      } catch (error) {
-        if (attempt === MAX_ATTEMPTS || !isTransientError(error)) {
-          throw error;
-        }
+/** Calls Gemini, retrying once on transient provider errors. */
+async function generateWithRetry(
+  ai: GoogleGenAI,
+  request: GenerateContentParameters,
+): Promise<GenerateContentResponse> {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      return await ai.models.generateContent({
+        ...request,
+        config: {
+          ...request.config,
+          abortSignal: AbortSignal.timeout(GEMINI_TIMEOUT_MS),
+        },
+      });
+    } catch (error) {
+      if (attempt >= MAX_ATTEMPTS || !isTransientError(error)) {
+        throw error;
       }
     }
+  }
+}
 
-    if (!response) {
-      throw new Error("No response received from the AI service.");
+function parseModelOutput(response: GenerateContentResponse): ModelOutput {
+  if (!response.text) {
+    throw new ApiError(502, MESSAGES.emptyResponse);
+  }
+
+  let rawResult: unknown;
+
+  try {
+    rawResult = JSON.parse(response.text);
+  } catch {
+    console.error("AuraPlan returned invalid JSON.");
+    throw new ApiError(502, MESSAGES.unreadableResponse);
+  }
+
+  const result = ModelOutputSchema.safeParse(rawResult);
+
+  if (!result.success) {
+    console.error("AuraPlan response validation failed:", result.error.issues);
+    throw new ApiError(502, MESSAGES.invalidPlan);
+  }
+
+  return result.data;
+}
+
+/**
+ * Code does the arithmetic: weights become amounts that add up exactly to the
+ * budget left after the contingency reserve. Tasks that would already be
+ * overdue are pulled forward to today and flagged as urgent.
+ */
+function buildRecommendation(
+  output: ModelOutput,
+  totalBudget: number,
+  daysUntilEvent: number,
+): Recommendations {
+  const availableBudget = Math.max(
+    0,
+    totalBudget - Math.round(totalBudget * (CONTINGENCY_PERCENT / 100)),
+  );
+
+  const schedule = (daysBefore: number) => ({
+    daysBefore: Math.min(daysBefore, daysUntilEvent),
+    urgent: daysBefore > daysUntilEvent,
+  });
+
+  const timeline = output.timeline
+    .map((item) => {
+      const { daysBefore, urgent } = schedule(item.daysBeforeEvent);
+
+      return { title: item.title, daysBeforeEvent: daysBefore, urgent };
+    })
+    .sort((a, b) => b.daysBeforeEvent - a.daysBeforeEvent);
+
+  const vendors = output.vendors.map((vendor) => {
+    const { daysBefore, urgent } = schedule(vendor.bookByDaysBefore);
+
+    return {
+      name: vendor.name,
+      category: vendor.category,
+      tip: vendor.tip,
+      bookByDaysBefore: daysBefore,
+      urgent,
+    };
+  });
+
+  // Final contract check: the browser receives only validated data.
+  return RecommendationSchema.parse({
+    ideas: output.ideas,
+    budgetItems: allocateBudget(output.budgetItems, availableBudget),
+    timeline,
+    vendors,
+  });
+}
+
+async function createRecommendation(
+  request: PlanRequest,
+  todayString: string,
+  daysUntilEvent: number,
+): Promise<Recommendations> {
+  const ai = new GoogleGenAI({ apiKey: requireApiKey() });
+  const startedAt = Date.now();
+
+  const response = await generateWithRetry(
+    ai,
+    buildGeminiRequest(request, todayString),
+  );
+
+  console.info(`AuraPlan Gemini generation: ${Date.now() - startedAt} ms`);
+
+  return buildRecommendation(
+    parseModelOutput(response),
+    request.totalBudget,
+    daysUntilEvent,
+  );
+}
+
+// --- Handler -----------------------------------------------------------------
+
+function sendError(res: VercelResponse, error: unknown) {
+  if (error instanceof ApiError) {
+    for (const [name, value] of Object.entries(error.headers)) {
+      res.setHeader(name, value);
     }
 
-    console.info(`AuraPlan Gemini generation: ${Date.now() - startedAt} ms`);
+    return res.status(error.status).json({ error: error.message });
+  }
 
-    if (!response.text) {
-      return res.status(502).json({
-        error: "The AI service returned an empty response. Please try again.",
-      });
+  if (isTimeoutError(error)) {
+    console.error("AuraPlan Gemini request timed out.");
+
+    return res.status(504).json({ error: MESSAGES.timeout });
+  }
+
+  // Never log the API key, full prompt, or full provider response.
+  console.error(
+    "AuraPlan Gemini request failed:",
+    error instanceof Error ? error.message : "Unknown error",
+  );
+
+  return res.status(502).json({ error: MESSAGES.generationFailed });
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+
+  try {
+    assertValidTransport(req);
+    enforceRateLimit(req, res);
+
+    const request = parsePlanRequest(req.body);
+
+    // Compare date-only values in UTC to avoid time-of-day differences.
+    const todayString = new Date().toISOString().slice(0, 10);
+    const daysUntilEvent = getDaysUntilEvent(request.eventDate, todayString);
+
+    if (daysUntilEvent < 0) {
+      throw new ApiError(400, MESSAGES.pastDate);
     }
 
-    let rawResult: unknown;
-
-    try {
-      rawResult = JSON.parse(response.text);
-    } catch {
-      console.error("AuraPlan returned invalid JSON.");
-
-      return res.status(502).json({
-        error: "The AI response could not be processed. Please try again.",
-      });
-    }
-
-    const result = ModelOutputSchema.safeParse(rawResult);
-
-    if (!result.success) {
-      console.error(
-        "AuraPlan response validation failed:",
-        result.error.issues,
-      );
-
-      return res.status(502).json({
-        error: "The AI generated an invalid plan. Please try again.",
-      });
-    }
-
-    // Code does the arithmetic: weights become amounts that add up exactly
-    // to the budget left after the contingency reserve.
-    const availableBudget = Math.max(
-      0,
-      totalBudget - Math.round(totalBudget * (CONTINGENCY_PERCENT / 100)),
+    const recommendation = await createRecommendation(
+      request,
+      todayString,
+      daysUntilEvent,
     );
 
-    // Tasks that would already be overdue are pulled forward to today and
-    // flagged as urgent.
-    const schedule = (daysBefore: number) => ({
-      daysBefore: Math.min(daysBefore, daysUntilEvent),
-      urgent: daysBefore > daysUntilEvent,
-    });
-
-    const timeline = result.data.timeline
-      .map((item) => {
-        const { daysBefore, urgent } = schedule(item.daysBeforeEvent);
-
-        return { title: item.title, daysBeforeEvent: daysBefore, urgent };
-      })
-      .sort((a, b) => b.daysBeforeEvent - a.daysBeforeEvent);
-
-    const vendors = result.data.vendors.map((vendor) => {
-      const { daysBefore, urgent } = schedule(vendor.bookByDaysBefore);
-
-      return {
-        name: vendor.name,
-        category: vendor.category,
-        tip: vendor.tip,
-        bookByDaysBefore: daysBefore,
-        urgent,
-      };
-    });
-
-    // Final contract check: the browser receives only validated data.
-    return res.status(200).json(
-      RecommendationSchema.parse({
-        ideas: result.data.ideas,
-        budgetItems: allocateBudget(result.data.budgetItems, availableBudget),
-        timeline,
-        vendors,
-      }),
-    );
+    return res.status(200).json(recommendation);
   } catch (error) {
-    if (
-      error instanceof Error &&
-      (error.name === "TimeoutError" || error.name === "AbortError")
-    ) {
-      console.error("AuraPlan Gemini request timed out.");
-
-      return res.status(504).json({
-        error: "The AI service took too long to respond. Please try again.",
-      });
-    }
-
-    // Never log the API key, full prompt, or full provider response.
-    console.error(
-      "AuraPlan Gemini request failed:",
-      error instanceof Error ? error.message : "Unknown error",
-    );
-
-    return res.status(502).json({
-      error: "Unable to generate recommendations right now. Please try again.",
-    });
+    return sendError(res, error);
   }
 }
